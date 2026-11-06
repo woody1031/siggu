@@ -1,0 +1,6 @@
+{
+  "name": "siggu",
+  "private": true,
+  "type": "module",
+  "description": "Siggu (식구) meeting-date picker: static page in prototype/, API in api/ (Vercel functions + Upstash Redis)"
+}
