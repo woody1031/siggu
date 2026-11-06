@@ -1,6 +1,24 @@
+<!doctype html>
+<html lang="ko">
 <title>Siggu 식구</title>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="식구 5명이 각자 되는 날을 찍고, 모두 모일 수 있는 날을 정해요.">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Siggu 식구">
+<meta property="og:title" content="Siggu 식구">
+<meta property="og:description" content="우리 언제 만나? 되는 날을 찍으면 모두 모일 수 있는 날을 알려줘요.">
+<meta property="og:url" content="https://siggu-silk.vercel.app/">
+<meta property="og:image" content="https://siggu-silk.vercel.app/og.jpg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="1200">
+<meta property="og:image:alt" content="식구 캐릭터 다섯: 비숑, 쿼카, 비둘기, 뱁새, 여우">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://siggu-silk.vercel.app/og.jpg">
+<meta name="theme-color" content="#FAFAFA">
+<meta name="apple-mobile-web-app-title" content="식구">
+<link rel="icon" type="image/png" href="/favicon.png">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -399,6 +417,7 @@ function seed() {
    local : no API available (local preview) -> this browser only, with example data */
 const ME_KEY = 'siggu-me';
 let MODE = 'loading', bootError = '';
+const LOCAL_PREVIEW = location.protocol === 'file:' || /^(localhost|127\.0\.0\.1|\[::1\])$/.test(location.hostname);
 function load() { try { const r = localStorage.getItem(LS); if (r) return JSON.parse(r); } catch (e) {} return seed(); }
 function save() {
   try {
@@ -425,9 +444,9 @@ async function boot() {
   try {
     const r = await fetch('/api/state', { cache: 'no-store' });
     if (r.ok) { const j = await r.json(); MODE = 'server'; S = { me: readMe(), meetings: j.meetings || [] }; }
-    else if (r.status === 404 || r.status === 503) { MODE = 'local'; S = load(); }
+    else if (LOCAL_PREVIEW && (r.status === 404 || r.status === 503)) { MODE = 'local'; S = load(); }
     else { MODE = 'error'; bootError = (await r.json().catch(() => ({}))).error || ''; }
-  } catch (e) { MODE = location.protocol === 'file:' ? 'local' : 'error'; if (MODE === 'local') S = load(); }
+  } catch (e) { MODE = LOCAL_PREVIEW ? 'local' : 'error'; if (MODE === 'local') S = load(); }
   render();
   if (MODE === 'server') {
     setInterval(refresh, 30000);
@@ -518,9 +537,7 @@ function calendar(m, cell) {
 }
 
 /* ---------- views ---------- */
-const footer = () => MODE === 'server'
-  ? `<footer class="foot"><span>식구 모두가 같은 내용을 보고 함께 고쳐요</span></footer>`
-  : `<footer class="foot"><span>프로토타입 · 이 폰에만 저장돼요</span><span><button class="linkbtn" data-act="reset">예시 데이터 보기</button> · <button class="linkbtn" data-act="wipe">처음 상태로 비우기</button></span></footer>`;
+const footer = () => MODE !== 'local' ? '' : `<footer class="foot"><span>프로토타입 · 이 폰에만 저장돼요</span><span><button class="linkbtn" data-act="reset">예시 데이터 보기</button> · <button class="linkbtn" data-act="wipe">처음 상태로 비우기</button></span></footer>`;
 const brand = () => `<header class="brand">
     <h1 class="logo"><span class="logo-mark" role="img" aria-label="Siggu 식구"></span></h1>
     <button class="me-chip" data-act="who">${S.me ? `${av(S.me, 'sm')}<span><b>${M[S.me].name}</b> · 바꾸기</span>` : '<span>누구세요? <b>선택하기</b></span>'}</button>
