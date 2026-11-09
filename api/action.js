@@ -1,4 +1,4 @@
-import { MEMBERS, configured, pipeline, readMeetings, readState, redis, saveMeeting, send } from './_db.js';
+import { MEMBERS, configured, pairs, pipeline, readMeetings, readState, redis, saveMeeting, send } from './_db.js';
 
 // POST /api/action { type, ... } -> applies one change, returns the full new state.
 const DATE = /^\d{4}-\d{2}-\d{2}$/;
@@ -32,6 +32,30 @@ async function apply(op) {
       const archived = list.filter(x => x.status === 'voting').map(x => saveMeeting({ ...x, status: 'archived' }));
       await pipeline([...archived, saveMeeting(fresh)]);
       return { created: fresh };
+    }
+    case 'update': {
+      // Rename and/or change the candidate period. Dates outside the new period are dropped,
+      // and a confirmed date that falls outside it is un-confirmed.
+      need(DATE.test(op.start) && DATE.test(op.end) && op.start <= op.end, '후보 기간을 다시 골라주세요.');
+      const year = Number(op.start.slice(0, 4));
+      const round = year === m.year ? m.round : list.filter(x => x.id !== m.id && x.year === year).length + 1;
+      const outside = m.confirmed && (m.confirmed < op.start || m.confirmed > op.end);
+      const next = {
+        ...m, year, round, title: clean(op.title, 20) || m.title, start: op.start, end: op.end,
+        ...(outside ? { confirmed: null, status: 'voting' } : {}),
+      };
+      const avail = pairs(await redis('HGETALL', `avail:${m.id}`));
+      const trimmed = Object.entries(avail).flatMap(([member, json]) => {
+        const kept = JSON.parse(json).filter(d => d >= op.start && d <= op.end);
+        return [member, JSON.stringify(kept)];
+      });
+      const others = outside ? list.filter(x => x.id !== m.id && x.status === 'voting').map(x => saveMeeting({ ...x, status: 'archived' })) : [];
+      await pipeline([...others, saveMeeting(next), ...(trimmed.length ? [['HSET', `avail:${m.id}`, ...trimmed]] : [])]);
+      return {};
+    }
+    case 'delete': {
+      await pipeline([['HDEL', 'meetings', m.id], ['DEL', `avail:${m.id}`], ['DEL', `photo:${m.id}`]]);
+      return {};
     }
     case 'avail': {
       need(Array.isArray(op.dates) && op.dates.length <= 400, '날짜를 다시 골라주세요.');

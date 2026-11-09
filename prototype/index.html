@@ -158,6 +158,12 @@ h1,h2,h3{text-wrap:balance}
 .btn.plain:hover,.btn.ghost:hover{background:var(--muted-bg)}
 .btn.ghost{border-style:dashed;box-shadow:none;color:var(--muted)}
 .btn.sm{height:34px;font-size:13px;padding:0 14px;justify-self:center}
+.btn.del{background:var(--surface);color:var(--destructive);border-color:color-mix(in srgb,var(--destructive) 35%,var(--line));box-shadow:var(--shadow-xs)}
+.btn.del:hover{background:color-mix(in srgb,var(--destructive) 8%,var(--surface))}
+.btn.del-solid{background:var(--destructive);color:#fff}
+.danger-zone{margin-top:32px;padding-top:20px;border-top:1px solid var(--line);display:grid;gap:12px}
+.danger-zone p{margin:0;font-size:13px;color:var(--muted)}
+.edit-chip{margin-left:auto;height:28px;padding:0 10px;font-size:12px}
 .btn.danger{background:transparent;color:var(--muted)}
 .btn.danger:hover{background:var(--muted-bg);color:var(--ink)}
 .btn:active,.pick:active,.rec:active{transform:scale(.99)}
@@ -354,6 +360,8 @@ const MEMBERS = [
 ];
 const hasBatchim = w => { const c = w.charCodeAt(w.length - 1) - 0xAC00; return c >= 0 && c <= 11171 && c % 28 !== 0; };
 const ga = w => w + (hasBatchim(w) ? '이' : '가');
+const eul = w => w + (hasBatchim(w) ? '을' : '를');
+const eun = w => w + (hasBatchim(w) ? '은' : '는');
 const ro = w => { const c = w.charCodeAt(w.length - 1) - 0xAC00; return w + (hasBatchim(w) && c % 28 !== 8 ? '으로' : '로'); };
 /* 생일 달에는 꼬깔모자, 생일 전달·다음달에는 반투명 꼬깔모자를 써요. 미리보기: 주소 뒤에 ?month=10 처럼 붙이면 그 달로 보여요. */
 const MONTH = (() => { const q = new URLSearchParams(location.search).get('month'); const n = Number(q); return q === 'all' ? 'all' : (n >= 1 && n <= 12 ? n : new Date().getMonth() + 1); })();
@@ -464,7 +472,7 @@ async function refresh() {
 }
 
 let S = { me: null, meetings: [] };
-let view = 'home', viewMid = null, draft = null, pendingAfterPick = null, drag = null;
+let view = 'home', viewMid = null, editMid = null, draft = null, pendingAfterPick = null, drag = null;
 const $app = document.getElementById('app'), $scrim = document.getElementById('scrim'), $sheet = document.getElementById('sheet'), $toast = document.getElementById('toast');
 
 const cur = () => S.meetings.find(m => m.status !== 'archived') || S.meetings[0];
@@ -572,7 +580,7 @@ function vHome() {
     <button class="me-chip" data-act="who">${meIn ? `${av(meIn, 'sm')}<span><b>${M[meIn].name}</b> · 바꾸기</span>` : '<span>누구세요? <b>선택하기</b></span>'}</button>
   </header>
   <article class="card">
-    <div class="eyebrow">${label(m)} <span class="pill ${m.status === 'confirmed' ? 'done' : ''}">${m.status === 'confirmed' ? '날짜 확정' : '날짜 고르는 중'}</span></div>
+    <div class="eyebrow">${label(m)} <span class="pill ${m.status === 'confirmed' ? 'done' : ''}">${m.status === 'confirmed' ? '날짜 확정' : '날짜 고르는 중'}</span><button class="chipbtn edit-chip" data-act="edit" data-v="${m.id}">수정</button></div>
     <h2 class="h2">${esc(m.title)}</h2>
     <p class="range">후보 ${fmt(m.start)} ~ ${fmt(m.end)}</p>
     ${m.confirmed ? planBlock(m) : ''}
@@ -631,29 +639,35 @@ function vResult() {
     return `<button type="button" class="day ${cls} l${n} ${n === 0 ? 'in' : ''} ${m.confirmed === k ? 'conf' : ''}" data-act="day" data-v="${k}" aria-label="${fmt(k)}, ${n}명 가능">${d}${n ? `<span class="n">${n === MEMBERS.length ? '모두' : n + '명'}</span>` : ''}</button>`;
   })}
   <div class="legend"><span class="sp">0명</span>${levels}<span class="sp">5명</span></div>`}
-  ${isCur ? `<div class="btns" style="margin-top:20px"><button class="btn sec" data-act="enter">${S.me && ent.includes(S.me) ? '내 날짜 수정' : '내 날짜 입력'}</button></div>` : ''}`;
+  <div class="btns" style="margin-top:20px">${isCur ? `<button class="btn sec" data-act="enter">${S.me && ent.includes(S.me) ? '내 날짜 수정' : '내 날짜 입력'}</button>` : ''}<button class="btn plain" data-act="edit" data-v="${m.id}">모임 이름·후보 기간 수정</button></div>`;
 }
 
 function vNew() {
-  const c = cur(), voting = !!c && c.status === 'voting', t = new Date();
-  const s0 = c ? new Date(parse(c.end).getFullYear(), parse(c.end).getMonth() + 2, 1) : new Date(t.getFullYear(), t.getMonth() + 1, 1); const e0 = new Date(s0.getFullYear(), s0.getMonth() + 2, 0);
-  return `${topbar(c ? '새 모임 만들기' : '첫 모임 만들기')}
-  ${voting ? `<div class="warn">지금 <b>${esc(c.title)}</b>의 날짜를 고르는 중이에요. 새 모임을 만들면 ${esc(c.title)}은(는) 확정 없이 지난 모임으로 넘어가요.</div>` : ''}
+  const em = editMid ? byId(editMid) : null;
+  const c = cur(), voting = !em && !!c && c.status === 'voting', t = new Date();
+  let s0, e0;
+  if (em) { const a = parse(em.start), b = parse(em.end); s0 = new Date(a.getFullYear(), a.getMonth(), 1); e0 = new Date(b.getFullYear(), b.getMonth() + 1, 0); }
+  else { s0 = c ? new Date(parse(c.end).getFullYear(), parse(c.end).getMonth() + 2, 1) : new Date(t.getFullYear(), t.getMonth() + 1, 1); e0 = new Date(s0.getFullYear(), s0.getMonth() + 2, 0); }
+  return `${topbar(em ? '모임 수정' : c ? '새 모임 만들기' : '첫 모임 만들기', em ? `${label(em)} · ${esc(em.title)}` : '')}
+  ${voting ? `<div class="warn">지금 <b>${esc(c.title)}</b>의 날짜를 고르는 중이에요. 새 모임을 만들면 ${esc(eun(c.title))} 확정 없이 지난 모임으로 넘어가요.</div>` : ''}
   <form id="nf" novalidate>
-    <div class="field"><label for="nm-title">모임 이름</label><input id="nm-title" maxlength="20" placeholder="예: 봄 모임" autocomplete="off"></div>
+    <div class="field"><label for="nm-title">모임 이름</label><input id="nm-title" maxlength="20" placeholder="예: 봄 모임" autocomplete="off" value="${em ? esc(em.title) : ''}"></div>
     <div class="row2">
       <div class="field"><label for="nm-start">시작 달</label><select id="nm-start">${monthOpts(s0)}</select></div>
       <div class="field"><label for="nm-end">마지막 달</label><select id="nm-end">${monthOpts(new Date(e0.getFullYear(), e0.getMonth(), 1))}</select></div>
     </div>
     <div class="preview" id="nm-prev"></div>
+    <div class="warn" id="nm-warn" hidden></div>
     <p class="err" id="nm-err" hidden></p>
-    <div class="btns"><button class="btn pri" type="submit">모임 만들기</button></div>
-  </form>`;
+    <div class="btns"><button class="btn pri" type="submit">${em ? '저장하기' : '모임 만들기'}</button></div>
+  </form>
+  ${em ? `<div class="danger-zone"><p>모임을 지우면 식구들이 찍은 날짜, 시간·장소, 사진이 모두 사라져요.</p><button class="btn del" data-act="askdel" data-v="${em.id}">이 모임 삭제</button></div>` : ''}`;
 }
 
 /* 오늘이 속한 달부터 24개월을 고를 수 있어요. 값은 그 달 1일 */
 function monthOpts(sel) {
-  const t = new Date(), base = new Date(t.getFullYear(), t.getMonth(), 1), want = toKey(sel);
+  const t = new Date(), now = new Date(t.getFullYear(), t.getMonth(), 1), want = toKey(sel);
+  const base = sel < now ? new Date(sel.getFullYear(), sel.getMonth(), 1) : now;
   let html = '', found = false;
   for (let i = 0; i < 24; i++) {
     const d = new Date(base.getFullYear(), base.getMonth() + i, 1), k = toKey(d);
@@ -670,14 +684,24 @@ function newInfo() {
   const months = (ed.getFullYear() - parse(sm).getFullYear()) * 12 + ed.getMonth() - parse(sm).getMonth() + 1;
   if (months > 4) return { err: '후보 기간은 4개월 안으로 정해주세요.' };
   const n = days(s, e).length;
-  const year = parse(s).getFullYear();
-  const round = S.meetings.filter(x => x.year === year).length + 1;
-  return { s, e, n, year, round };
+  const year = parse(s).getFullYear(), mt = editMid ? byId(editMid) : null;
+  const round = mt && mt.year === year ? mt.round : S.meetings.filter(x => x.year === year && x !== mt).length + 1;
+  let drop = 0, unconfirm = false;
+  if (mt) {
+    drop = Object.values(mt.avail || {}).flat().filter(d => d < s || d > e).length;
+    unconfirm = !!mt.confirmed && (mt.confirmed < s || mt.confirmed > e);
+  }
+  return { s, e, n, year, round, drop, unconfirm };
 }
 function updPrev() {
   const i = newInfo(), p = document.getElementById('nm-prev'), er = document.getElementById('nm-err');
-  if (i.err) { er.textContent = i.err; er.hidden = false; p.innerHTML = '<span>회차</span><b>-</b>'; return; }
+  const w = document.getElementById('nm-warn');
+  if (i.err) { er.textContent = i.err; er.hidden = false; w.hidden = true; p.innerHTML = '<span>회차</span><b>-</b>'; return; }
   er.hidden = true;
+  const notes = [];
+  if (i.unconfirm) notes.push(`확정된 날(${fmt(byId(editMid).confirmed)})이 새 기간 밖이라 확정이 취소돼요.`);
+  if (i.drop) notes.push(`새 기간 밖에 찍힌 날짜 ${i.drop}개는 지워져요.`);
+  w.innerHTML = notes.join('<br>'); w.hidden = !notes.length;
   p.innerHTML = `<span>${md(i.s)} ~ ${md(i.e)}</span><b>${i.year}년 ${i.round}회차 · ${i.n}일</b>`;
 }
 
@@ -695,7 +719,7 @@ function render(scrollTop) {
     const $s = document.getElementById('nm-start'), $e = document.getElementById('nm-end');
     $s.addEventListener('change', () => { if ($e.value < $s.value) $e.value = $s.value; updPrev(); });
     $e.addEventListener('change', updPrev);
-    document.getElementById('nf').addEventListener('submit', e => { e.preventDefault(); createMeeting(); });
+    document.getElementById('nf').addEventListener('submit', e => { e.preventDefault(); editMid ? updateMeeting() : createMeeting(); });
   }
   if (scrollTop) window.scrollTo(0, 0);
 }
@@ -808,6 +832,23 @@ function startInput() { const m = cur(); draft = new Set(m.avail[S.me] || []); g
 function dirty() { const a = cur().avail[S.me] || []; return a.length !== draft.size || a.some(d => !draft.has(d)); }
 function updCount() { const c = document.getElementById('count'); if (c) c.innerHTML = `<b>${draft.size}</b>일 선택`; }
 function paintEl(k) { const el = $app.querySelector(`.day[data-d="${k}"]`); if (el) { el.classList.toggle('sel', draft.has(k)); el.setAttribute('aria-pressed', draft.has(k)); } }
+async function updateMeeting() {
+  const i = newInfo(); if (i.err) { updPrev(); return; }
+  const id = editMid, typed = document.getElementById('nm-title').value.trim();
+  const ok = await commit({ type: 'update', mid: id, title: typed, start: i.s, end: i.e }, () => {
+    const m = byId(id), out = !!m.confirmed && (m.confirmed < i.s || m.confirmed > i.e);
+    Object.assign(m, { title: typed || m.title, start: i.s, end: i.e, year: i.year, round: i.round });
+    for (const k of Object.keys(m.avail || {})) m.avail[k] = m.avail[k].filter(d => d >= i.s && d <= i.e);
+    if (out) { m.confirmed = null; m.status = 'voting'; S.meetings.forEach(x => { if (x !== m && x.status === 'voting') x.status = 'archived'; }); }
+  });
+  if (!ok) return;
+  editMid = null; viewMid = id; go('result'); toast('모임을 수정했어요');
+}
+function sheetDel(id) {
+  const m = byId(id);
+  openSheet(`<h2>${esc(eul(m.title))} 삭제할까요?</h2><p class="sub">${label(m)} 모임과 식구들이 찍은 날짜, 시간·장소, 사진이 모두 지워져요. 지운 뒤에는 되돌릴 수 없어요.</p>
+    <div class="row-btns"><button class="btn plain" data-act="close">취소</button><button class="btn del-solid" data-act="dodel" data-v="${id}">삭제하기</button></div>`);
+}
 async function createMeeting() {
   const i = newInfo(); if (i.err) { updPrev(); return; }
   const typed = document.getElementById('nm-title').value.trim();
@@ -817,7 +858,7 @@ async function createMeeting() {
   });
   if (!ok) return;
   const m = cur();
-  go('home'); toast(`${m.year}년 ${m.round}회차 ${m.title}을(를) 만들었어요`);
+  go('home'); toast(`${m.year}년 ${m.round}회차 ${eul(m.title)} 만들었어요`);
 }
 
 document.addEventListener('click', e => {
@@ -843,7 +884,15 @@ document.addEventListener('click', e => {
     case 'plan': openPlan(v); break;
     case 'settime': document.getElementById('pl-time').value = v; break;
     case 'result': viewMid = v || cur().id; go('result'); break;
-    case 'new': go('new'); break;
+    case 'new': editMid = null; go('new'); break;
+    case 'edit': editMid = v; go('new'); break;
+    case 'askdel': sheetDel(v); break;
+    case 'dodel': {
+      const title = (byId(v) || {}).title || '모임';
+      commit({ type: 'delete', mid: v }, () => { S.meetings = S.meetings.filter(x => x.id !== v); })
+        .then(ok => { if (ok) { closeSheet(); editMid = null; viewMid = null; go('home'); toast(`${eul(title)} 삭제했어요`); } });
+      break;
+    }
     case 'weekend': { const m = cur(); days(m.start, m.end).filter(isOff).forEach(d => { draft.add(d); paintEl(d); }); updCount(); toast('주말과 공휴일을 모두 골랐어요'); break; }
     case 'clear': { const old = [...draft]; draft.clear(); old.forEach(paintEl); updCount(); break; }
     case 'save': {

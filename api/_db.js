@@ -28,7 +28,7 @@ export async function pipeline(commands) {
 export const redis = async (...command) => (await pipeline([command]))[0];
 
 // HGETALL returns a flat [field, value, field, value, ...] array.
-const pairs = flat => {
+export const pairs = flat => {
   const o = {};
   for (let i = 0; flat && i < flat.length; i += 2) o[flat[i]] = flat[i + 1];
   return o;
