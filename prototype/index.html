@@ -110,8 +110,12 @@ h1,h2,h3{text-wrap:balance}
 /* badge */
 .pill{display:inline-flex;align-items:center;gap:6px;border-radius:var(--radius-sm);border:1px solid var(--line);padding:2px 8px;font-size:12px;font-weight:500;line-height:1.4;background:var(--surface);color:var(--ink)}
 .pill::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--success)}
-.pill.done{background:var(--success);color:var(--accent-ink);border-color:transparent}
-.pill.done::before{background:currentColor}
+.pill.st-confirmed{background:var(--success);color:var(--accent-ink);border-color:transparent}
+.pill.st-confirmed::before{background:currentColor}
+.pill.st-over{background:var(--primary);color:var(--primary-fg);border-color:transparent}
+.pill.st-over::before{content:"✓";width:auto;height:auto;border-radius:0;background:none;font-size:11px;line-height:1}
+.pill.st-ended{background:var(--muted-bg);color:var(--muted);border-color:transparent}
+.pill.st-ended::before{background:var(--muted)}
 .h2{font-family:var(--f-display);font-weight:600;letter-spacing:-.02em;font-size:26px;line-height:1.2;margin:10px 0 4px}
 .range{color:var(--muted);font-size:12px;margin:0;font-variant-numeric:tabular-nums}
 
@@ -506,6 +510,13 @@ const wdClass = k => (wday(k) === 0 || hol(k)) ? 'red' : wday(k) === 6 ? 'blue' 
 const backIcon = '<svg viewBox="0 0 24 24" fill="none" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg>';
 const topbar = (t, s = '', act = 'home') => `<header class="topbar"><button class="back" data-act="${act}" aria-label="뒤로">${backIcon}</button><div class="tb"><h1 class="tb-t">${t}</h1>${s ? `<p class="tb-s">${s}</p>` : ''}</div></header>`;
 const label = m => `${m.year}년 ${m.round}회차`;
+/* 모임 단계: 날짜 고르는 중 → 날짜 확정 → (확정한 날이 지나면) 모임 완료 */
+function stage(m) {
+  if (m.confirmed) return m.confirmed < toKey(new Date()) ? 'over' : 'confirmed';
+  return m.status === 'archived' ? 'ended' : 'voting';
+}
+const STAGE_LABEL = { voting: '날짜 고르는 중', confirmed: '날짜 확정', over: '모임 완료', ended: '확정 없이 끝남' };
+const stagePill = m => { const st = stage(m); return `<span class="pill st-${st}">${STAGE_LABEL[st]}</span>`; };
 function fmtTime(t) {
   if (!t) return '';
   const [h, mi] = t.split(':').map(Number);
@@ -582,7 +593,7 @@ function vHome() {
     <button class="me-chip" data-act="who">${meIn ? `${av(meIn, 'sm')}<span><b>${M[meIn].name}</b> · 바꾸기</span>` : '<span>누구세요? <b>선택하기</b></span>'}</button>
   </header>
   <article class="card">
-    <div class="eyebrow">${label(m)} <span class="pill ${m.status === 'confirmed' ? 'done' : ''}">${m.status === 'confirmed' ? '날짜 확정' : '날짜 고르는 중'}</span><button class="chipbtn edit-chip" data-act="edit" data-v="${m.id}">수정</button></div>
+    <div class="eyebrow">${label(m)} ${stagePill(m)}<button class="chipbtn edit-chip" data-act="edit" data-v="${m.id}">수정</button></div>
     <h2 class="h2">${esc(m.title)}</h2>
     <p class="range">후보 ${fmt(m.start)} ~ ${fmt(m.end)}</p>
     ${m.confirmed ? planBlock(m) : ''}
