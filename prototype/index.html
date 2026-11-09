@@ -321,6 +321,8 @@ h1,h2,h3{text-wrap:balance}
 .who-grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:6px;margin:20px 0 6px}
 .pickme{display:flex;flex-direction:column;align-items:center;gap:6px;border:1px solid transparent;background:none;padding:10px 0;border-radius:var(--radius);cursor:pointer;font-size:13px;font-weight:500}
 .pickme:hover{background:var(--muted-bg)}
+/* 누구세요? 시트: 다연 캐릭터는 70% 크기 */
+.pickme[data-v="babsae"] .av img{transform:scale(.7)}
 .pickme.on{background:var(--muted-bg);border-color:var(--line)}
 .grp{margin-top:16px}
 .grp-t{font-size:12px;font-weight:500;color:var(--muted);margin-bottom:8px}
