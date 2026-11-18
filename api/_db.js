@@ -3,7 +3,7 @@
 // Keys
 //   meetings          hash  meetingId -> meeting JSON (without availability)
 //   avail:<meetingId> hash  memberId  -> JSON array of 'YYYY-MM-DD'
-//   photo:<meetingId>:<photoId> string  JPEG data URL (up to 3 photos per meeting)
+//   photo:<meetingId>:<photoId> string  JPEG data URL (up to 10 photos per meeting)
 //   photo:<meetingId>     string        older single photo, shown as photo id 'legacy'
 //   profiles          hash  memberId  -> { birthday 'MM-DD', bio, updatedAt } (no phone numbers)
 // Photos uploaded through Vercel Blob keep only their URLs here: url (display), thumb, orig (original file).
@@ -60,7 +60,7 @@ export async function readState() {
   return { meetings, profiles, features };
 }
 
-export const MAX_PHOTOS = 5;
+export const MAX_PHOTOS = 10;
 export const blobEnabled = () => Boolean(process.env.BLOB_READ_WRITE_TOKEN);
 export const BLOB_URL = /^https:\/\/[a-z0-9]+\.public\.blob\.vercel-storage\.com\/[^\s"'<>]+$/i;
 export const photoKey = (mid, pid) => (pid === 'legacy' ? `photo:${mid}` : `photo:${mid}:${pid}`);
