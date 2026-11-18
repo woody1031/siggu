@@ -277,6 +277,7 @@ h1,h2,h3{text-wrap:balance}
 .linkbtn:hover{color:var(--ink)}
 
 /* top bar */
+.topbar{margin-left:calc(-1 * max(16px, env(safe-area-inset-left, 0px)));margin-right:calc(-1 * max(16px, env(safe-area-inset-right, 0px)));padding-left:max(16px, env(safe-area-inset-left, 0px));padding-right:max(16px, env(safe-area-inset-right, 0px))}
 .topbar{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg);display:flex;align-items:center;gap:12px;padding-block:12px}
 .back{width:36px;height:36px;border-radius:var(--radius-md);border:1px solid var(--line);background:var(--surface);display:grid;place-items:center;cursor:pointer;box-shadow:var(--shadow-xs);flex:none}
 .back:hover{background:var(--muted-bg)}
@@ -1071,7 +1072,7 @@ function photoBlock(m) {
   if (!ps.length) return `<button class="photo-empty" data-act="photo" data-v="${m.id}">${CAM}<b>모임 사진 올리기</b><span>모임마다 ${MAX_PHOTOS}장까지 남길 수 있어요</span></button>`;
   return `<div class="gallery ${ps.length === 1 ? 'one' : ''}">${ps.map((p, i) => `<figure class="photo"><a href="${p.orig || p.url}" target="_blank" rel="noopener" aria-label="사진 ${i + 1} 원본 보기"><img src="${p.url}" alt="${esc(m.title)} 사진 ${i + 1}" loading="lazy"></a>
       <figcaption><span>${p.by && M[p.by] ? `${ro2(M[p.by].name)} 올렸어요` : ''}${ps.length > 1 ? ` · ${i + 1}/${ps.length}` : ''}</span>
-      <span class="photo-btns">${p.orig ? `<a class="chipbtn" href="${p.orig}" target="_blank" rel="noopener">원본</a>` : ''}<button class="chipbtn" data-act="photodel" data-v="${m.id}" data-p="${p.id}">삭제</button></span></figcaption></figure>`).join('')}</div>
+      <span class="photo-btns"><button class="chipbtn" data-act="photodel" data-v="${m.id}" data-p="${p.id}">삭제</button></span></figcaption></figure>`).join('')}</div>
     ${ps.length < MAX_PHOTOS ? `<button class="btn plain photo-add" data-act="photo" data-v="${m.id}">${CAM}사진 추가 <span class="pc">${ps.length}/${MAX_PHOTOS}</span></button>` : ''}`;
 }
 const ro2 = w => ga(w);
