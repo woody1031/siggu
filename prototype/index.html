@@ -53,7 +53,7 @@
   --warn-bg:#FFF7DE; --warn-ink:#9B7821; --warn-line:#FBDC65;             /* warning weak */
   --c-pigeon:#6A7FAD; --c-babsae:#A6744A; --c-koala:#7C8592; --c-fox:#DD6C25; --c-dog:#BE9550; --on-member:#FFFFFF;
   --scrim:rgba(0,0,0,.45);                                                /* bg-overlay */
-  --stage:#F7F8F9; --ped-top:#FFFFFF; --ped-side:#ECEEF1; --ped-shadow:rgba(26,28,32,.08); --sil-filter:brightness(0); --sil-op:.09;
+  --stage:#F7F8F9; --ped-top:#FFFFFF; --ped-side:#ECEEF1; --ped-shadow:rgba(26,28,32,.08); --sil-filter:brightness(0) invert(.885); --sil-op:1;
   --shadow-xs:none; --shadow-sm:none;
   --shadow-s1:0 1px 4px rgba(0,0,0,.08); --shadow-s2:0 2px 10px rgba(0,0,0,.1); --shadow-lg:0 4px 16px rgba(0,0,0,.12); /* shadow-s1..s3 */
   --radius:12px; --radius-sm:4px; --radius-md:8px; --radius-xl:16px; --radius-sheet:24px;
@@ -73,7 +73,7 @@
   --holiday:#FF6E60; --sat:#41A2F9; --warn-bg:#302819; --warn-ink:#CA901C; --warn-line:#543E15;
   --c-pigeon:#93A6D3; --c-babsae:#D2A178; --c-koala:#A9B1BE; --c-fox:#FF9A5A; --c-dog:#E2BF80; --on-member:#11151B;
   --scrim:rgba(0,0,0,.6);
-  --stage:#1D2025; --ped-top:#393D46; --ped-side:#32353D; --ped-shadow:rgba(0,0,0,.35); --sil-filter:brightness(0) invert(1); --sil-op:.13;
+  --stage:#1D2025; --ped-top:#393D46; --ped-side:#32353D; --ped-shadow:rgba(0,0,0,.35); --sil-filter:brightness(0) invert(.24); --sil-op:1;
   --shadow-s1:0 1px 4px rgba(0,0,0,.5); --shadow-s2:0 2px 10px rgba(0,0,0,.68); --shadow-lg:0 4px 16px rgba(0,0,0,.8);
   color-scheme:dark}}
 :root[data-theme="dark"]{
@@ -88,7 +88,7 @@
   --holiday:#FF6E60; --sat:#41A2F9; --warn-bg:#302819; --warn-ink:#CA901C; --warn-line:#543E15;
   --c-pigeon:#93A6D3; --c-babsae:#D2A178; --c-koala:#A9B1BE; --c-fox:#FF9A5A; --c-dog:#E2BF80; --on-member:#11151B;
   --scrim:rgba(0,0,0,.6);
-  --stage:#1D2025; --ped-top:#393D46; --ped-side:#32353D; --ped-shadow:rgba(0,0,0,.35); --sil-filter:brightness(0) invert(1); --sil-op:.13;
+  --stage:#1D2025; --ped-top:#393D46; --ped-side:#32353D; --ped-shadow:rgba(0,0,0,.35); --sil-filter:brightness(0) invert(.24); --sil-op:1;
   --shadow-s1:0 1px 4px rgba(0,0,0,.5); --shadow-s2:0 2px 10px rgba(0,0,0,.68); --shadow-lg:0 4px 16px rgba(0,0,0,.8);
   color-scheme:dark}
 
@@ -161,6 +161,10 @@ h1,h2,h3{text-wrap:balance}
 .fig .emo{position:relative;z-index:1;font-size:30px;line-height:1;margin-bottom:14%}
 .fig.sil .char img,.fig.sil .emo{filter:var(--sil-filter);opacity:var(--sil-op)}
 .members.intro .fig .char{animation:drop .34s cubic-bezier(.25,.8,.35,1) both;animation-delay:calc(60ms + var(--i, 0) * 70ms)}
+/* soft yellow halo behind a birthday-month character */
+.fig.bday-on .char::before{content:"";position:absolute;z-index:-1;left:50%;top:46%;width:150%;aspect-ratio:1;transform:translate(-50%,-50%);border-radius:50%;
+  background:radial-gradient(circle,rgba(255,212,59,.42) 0%,rgba(255,212,59,.2) 38%,rgba(255,212,59,0) 68%);pointer-events:none;animation:halo 3.2s ease-in-out infinite}
+@keyframes halo{0%,100%{opacity:.85;transform:translate(-50%,-50%) scale(.96)}50%{opacity:1;transform:translate(-50%,-50%) scale(1.04)}}
 .burst{position:absolute;left:50%;top:14%;width:0;height:0;z-index:3;pointer-events:none}
 .burst i{position:absolute;left:-2.5px;top:-2.5px;width:5px;height:6px;border-radius:1px;background:var(--c);opacity:0}
 .members.intro .fig.bday-on .burst i{animation:pop .9s cubic-bezier(.15,.7,.3,1) both;animation-delay:calc(400ms + var(--i, 0) * 70ms + var(--j, 0) * 25ms)}
