@@ -5,7 +5,7 @@
 //   avail:<meetingId> hash  memberId  -> JSON array of 'YYYY-MM-DD'
 //   photo:<meetingId>:<photoId> string  JPEG data URL (up to 3 photos per meeting)
 //   photo:<meetingId>     string        older single photo, shown as photo id 'legacy'
-//   profiles          hash  memberId  -> { birthday 'MM-DD', phone, bio, updatedAt }
+//   profiles          hash  memberId  -> { birthday 'MM-DD', bio, updatedAt } (no phone numbers)
 // Photos uploaded through Vercel Blob keep only their URLs here: url (display), thumb, orig (original file).
 
 const REDIS_URL = process.env.KV_REST_API_URL || process.env.UPSTASH_REDIS_REST_URL;
@@ -45,7 +45,7 @@ export async function readMeetings() {
 // Full state the page needs: newest meeting first, each with its availability.
 export async function readState() {
   const meetings = Object.values(await readMeetings());
-  const profiles = Object.fromEntries(Object.entries(pairs(await redis('HGETALL', 'profiles'))).map(([k, v]) => [k, JSON.parse(v)]));
+  const profiles = Object.fromEntries(Object.entries(pairs(await redis('HGETALL', 'profiles'))).map(([k, v]) => { const { phone, ...p } = JSON.parse(v); return [k, p]; }));
   const features = { blob: blobEnabled(), maxPhotos: MAX_PHOTOS };
   if (!meetings.length) return { meetings: [], profiles, features };
   const avails = await pipeline(meetings.map(m => ['HGETALL', `avail:${m.id}`]));

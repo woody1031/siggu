@@ -61,10 +61,9 @@ async function apply(op) {
       return {};
     }
     case 'profile': {
-      const birthday = String(op.birthday || ''), phone = clean(op.phone, 20), bio = clean(op.bio, 40);
+      const birthday = String(op.birthday || ''), bio = clean(op.bio, 40);
       need(!birthday || /^(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$/.test(birthday), '생일을 다시 골라주세요.');
-      need(!phone || /^[0-9+\-() ]{3,20}$/.test(phone), '전화번호는 숫자와 - 만 써주세요.');
-      await redis('HSET', 'profiles', op.member, JSON.stringify({ birthday, phone, bio, updatedAt: nowKST() }));
+      await redis('HSET', 'profiles', op.member, JSON.stringify({ birthday, bio, updatedAt: nowKST() }));
       return {};
     }
     case 'delete': {

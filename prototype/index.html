@@ -570,7 +570,7 @@ function seed() {
   const L = a => a.map(w);
   return {
     me: null,
-    profiles: { fox: { birthday: '01-14', phone: '010-1234-5678', bio: '여우는 사실 순해요' } },
+    profiles: { fox: { birthday: '01-14', bio: '여우는 사실 순해요' } },
     meetings: [
       { id: 'm2026-3', year: 2026, round: 3, title: '겨울 모임', start: '2026-12-01', end: '2027-01-31', confirmed: null, status: 'voting',
         avail: {
@@ -941,19 +941,12 @@ const fmtBirthday = b => b ? `${Number(b.slice(0, 2))}월 ${Number(b.slice(3, 5)
 function sheetProfile(id) {
   const x = M[id], p = profileOf(id), mine = id === S.me, unset = '<span class="unset">아직 안 적었어요</span>';
   const bd = p.birthday ? fmtBirthday(p.birthday) : `${x.bday}월 <span class="unset">· 날짜는 아직</span>`;
-  const tel = p.phone ? p.phone.replace(/[^0-9+]/g, '') : '';
   openSheet(`<div class="prof">${figure(x, true, x.name)}<h2>${x.name}${mine ? ' <span class="me-tag">나</span>' : ''}</h2><p class="sub">${x.animal}</p></div>
     <dl class="prof-list">
       <div><dt>생일</dt><dd>${bd}${bdayLevel(x) === 'on' ? ' 🎂' : ''}</dd></div>
-      <div><dt>전화번호</dt><dd>${p.phone ? `<a href="tel:${tel}">${esc(p.phone)}</a><button class="chipbtn" data-act="copyphone" data-v="${esc(p.phone)}">복사</button>` : unset}</dd></div>
       <div><dt>한 줄 소개</dt><dd>${p.bio ? esc(p.bio) : unset}</dd></div>
     </dl>
     ${mine ? `<div class="btns"><button class="btn sec" data-act="editprofile">내 프로필 수정</button></div>` : ''}`);
-}
-function fmtPhone(v) {
-  const d = v.replace(/\D/g, '').slice(0, 11);
-  if (d.startsWith('02')) return d.length > 9 ? `${d.slice(0, 2)}-${d.slice(2, 6)}-${d.slice(6)}` : d.length > 5 ? `${d.slice(0, 2)}-${d.slice(2, 5)}-${d.slice(5)}` : d;
-  return d.length > 10 ? `${d.slice(0, 3)}-${d.slice(3, 7)}-${d.slice(7)}` : d.length > 6 ? `${d.slice(0, 3)}-${d.slice(3, 6)}-${d.slice(6)}` : d.length > 3 ? `${d.slice(0, 3)}-${d.slice(3)}` : d;
 }
 function sheetProfileEdit() {
   const id = S.me, x = M[id], p = profileOf(id);
@@ -964,14 +957,11 @@ function sheetProfileEdit() {
       <div class="field"><label for="pf-m">생일</label><div class="row2">
         <select id="pf-m"><option value="">월</option>${Array.from({ length: 12 }, (_, i) => opt(i + 1, bm, '월')).join('')}</select>
         <select id="pf-d" aria-label="생일 날짜"><option value="">일</option>${Array.from({ length: 31 }, (_, i) => opt(i + 1, bdd, '일')).join('')}</select></div></div>
-      <div class="field"><label for="pf-phone">전화번호</label><input id="pf-phone" type="tel" inputmode="numeric" autocomplete="tel" maxlength="13" placeholder="010-1234-5678" value="${esc(p.phone || '')}"></div>
       <div class="field"><label for="pf-bio">한 줄 소개</label><input id="pf-bio" maxlength="40" placeholder="예: 맛집 찾는 걸 좋아해요" value="${esc(p.bio || '')}" autocomplete="off"><span class="hint" id="pf-n">${(p.bio || '').length}/40</span></div>
-      <p class="hint">전화번호는 사이트 주소를 아는 사람이면 누구나 볼 수 있어요.</p>
       <p class="err" id="pf-err" hidden></p>
       <div class="row-btns"><button type="button" class="btn plain" data-act="close">취소</button><button type="submit" class="btn pri">저장하기</button></div>
     </form>`);
-  const ph = document.getElementById('pf-phone'), bio = document.getElementById('pf-bio');
-  ph.addEventListener('input', () => { ph.value = fmtPhone(ph.value); });
+  const bio = document.getElementById('pf-bio');
   bio.addEventListener('input', () => { document.getElementById('pf-n').textContent = `${bio.value.length}/40`; });
   document.getElementById('prf').addEventListener('submit', e => { e.preventDefault(); saveProfile(); });
 }
@@ -980,9 +970,9 @@ async function saveProfile() {
   if (!!mo !== !!d) { er.textContent = '생일은 월과 일을 모두 골라주세요.'; er.hidden = false; return; }
   if (mo && d && Number(d) > new Date(2024, Number(mo), 0).getDate()) { er.textContent = '그 달에는 없는 날짜예요.'; er.hidden = false; return; }
   const birthday = mo ? `${pad(mo)}-${pad(d)}` : '';
-  const phone = document.getElementById('pf-phone').value.trim(), bio = document.getElementById('pf-bio').value.trim();
-  const ok = await commit({ type: 'profile', member: S.me, birthday, phone, bio }, () => {
-    S.profiles = S.profiles || {}; S.profiles[S.me] = { birthday, phone, bio };
+  const bio = document.getElementById('pf-bio').value.trim();
+  const ok = await commit({ type: 'profile', member: S.me, birthday, bio }, () => {
+    S.profiles = S.profiles || {}; S.profiles[S.me] = { birthday, bio };
   });
   if (!ok) return;
   render(); sheetProfile(S.me); toast('프로필을 저장했어요');
@@ -1206,11 +1196,6 @@ document.addEventListener('click', e => {
     case 'close': closeSheet(); break;
     case 'profile': sheetProfile(v); break;
     case 'editprofile': if (!S.me) { pendingAfterPick = null; sheetWho(); } else sheetProfileEdit(); break;
-    case 'copyphone': {
-      const done = () => toast('전화번호를 복사했어요');
-      try { navigator.clipboard.writeText(v).then(done, () => toast(v)); } catch (e) { toast(v); }
-      break;
-    }
     case 'theme': {
       const next = isDark() ? 'light' : 'dark';
       try { localStorage.setItem(THEME_KEY, next); } catch (e) {}
