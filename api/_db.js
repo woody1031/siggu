@@ -3,7 +3,8 @@
 // Keys
 //   meetings          hash  meetingId -> meeting JSON (without availability)
 //   avail:<meetingId> hash  memberId  -> JSON array of 'YYYY-MM-DD'
-//   photo:<meetingId> string            JPEG data URL (one photo per meeting)
+//   photo:<meetingId>:<photoId> string  JPEG data URL (up to 3 photos per meeting)
+//   photo:<meetingId>     string        older single photo, shown as photo id 'legacy'
 
 const REDIS_URL = process.env.KV_REST_API_URL || process.env.UPSTASH_REDIS_REST_URL;
 const REDIS_TOKEN = process.env.KV_REST_API_TOKEN || process.env.UPSTASH_REDIS_REST_TOKEN;
@@ -45,12 +46,18 @@ export async function readState() {
   if (!meetings.length) return { meetings: [] };
   const avails = await pipeline(meetings.map(m => ['HGETALL', `avail:${m.id}`]));
   meetings.forEach((m, i) => {
+    m.photos = photosOf(m); delete m.photo; delete m.photoBy;
     const a = pairs(avails[i]);
     m.avail = Object.fromEntries(Object.entries(a).map(([member, json]) => [member, JSON.parse(json)]));
   });
   meetings.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0) || b.year - a.year || b.round - a.round);
   return { meetings };
 }
+
+export const MAX_PHOTOS = 3;
+export const photoKey = (mid, pid) => (pid === 'legacy' ? `photo:${mid}` : `photo:${mid}:${pid}`);
+// Photos as a list; meetings saved before multi-photo had a single photo/photoBy.
+export const photosOf = m => m.photos || (m.photo ? [{ id: 'legacy', url: m.photo, by: m.photoBy || null }] : []);
 
 export const saveMeeting = m => {
   const { avail, ...rest } = m;

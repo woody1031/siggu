@@ -238,6 +238,17 @@ h1,h2,h3{text-wrap:balance}
 .photo img{display:block;width:100%;max-height:420px;object-fit:cover}
 .photo figcaption{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:10px 12px;font-size:12px;color:var(--muted)}
 .photo-btns{display:flex;gap:6px}
+.gallery{display:flex;gap:10px;overflow-x:auto;scroll-snap-type:x mandatory;margin-inline:-16px;padding-inline:16px;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+.gallery::-webkit-scrollbar{display:none}
+.gallery .photo{flex:0 0 86%;scroll-snap-align:center;min-width:0}
+.gallery.one .photo{flex-basis:100%}
+.gallery .photo img{aspect-ratio:4/5;max-height:none;height:auto}
+.gallery.one .photo img{aspect-ratio:auto;max-height:440px}
+.photo-add{width:100%;margin-top:10px;gap:6px}
+.photo-add svg{width:18px;height:18px}
+.photo-add .pc{color:var(--subtle);font-weight:500}
+.rthumb{position:relative}
+.rcount{position:absolute;right:3px;bottom:3px;min-width:16px;height:16px;padding:0 4px;border-radius:8px;background:rgba(0,0,0,.6);color:#fff;font-size:10px;font-weight:700;line-height:16px;text-align:center}
 .rec .rp{display:block;font-size:12px;font-weight:400;color:var(--muted);margin-top:2px;max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-left:auto}
 .steps{list-style:none;counter-reset:st;margin:4px 0 0;padding:0;display:grid;gap:12px}
 .steps li{counter-increment:st;display:grid;grid-template-columns:24px minmax(0,1fr);column-gap:12px;font-size:14px}
@@ -481,7 +492,7 @@ body{letter-spacing:-.01em}
 <div class="app" id="app"></div>
 <div class="scrim" id="scrim" hidden><div class="sheet" id="sheet" role="dialog" aria-modal="true"></div></div>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
-<input type="file" id="photo-in" accept="image/*" hidden>
+<input type="file" id="photo-in" accept="image/*" multiple hidden>
 
 <script>
 (() => {
@@ -754,7 +765,7 @@ function vHome() {
   </article>
   <div class="btns"><button class="btn ghost" data-act="new">+ 새 모임 만들기</button></div>
   ${recs.length ? `<h2 class="section-t">지난 모임</h2>${years.map(y => `<h3 class="year">${y}</h3><div class="records">${recs.filter(r => r.year === y).sort((a, b) => b.round - a.round).map(r => `
-      <button class="rec" data-act="result" data-v="${r.id}"><span class="rl"><span class="rthumb">${r.photo ? `<img src="${r.photo}" alt="">` : CAM}</span><span><span class="r1">${r.round}회차</span><br><span class="r2">${esc(r.title)}</span></span></span>
+      <button class="rec" data-act="result" data-v="${r.id}"><span class="rl"><span class="rthumb">${photosOf(r)[0] ? `<img src="${photosOf(r)[0].url}" alt="" loading="lazy">` : CAM}${photosOf(r).length > 1 ? `<span class="rcount">${photosOf(r).length}</span>` : ''}</span><span><span class="r1">${r.round}회차</span><br><span class="r2">${esc(r.title)}</span></span></span>
       <span class="rd ${r.confirmed ? '' : 'none'}">${r.confirmed ? fmt(r.confirmed) : '확정 없이 끝남'}${r.confirmed && (r.time || r.place) ? `<span class="rp">${[r.time && fmtTime(r.time), r.place && esc(r.place)].filter(Boolean).join(' · ')}</span>` : ''}</span></button>`).join('')}</div>`).join('')}` : ''}
   ${footer()}`;
 }
@@ -950,39 +961,55 @@ function sheetWipe() {
     <div class="row-btns"><button class="btn plain" data-act="close">취소</button><button class="btn pri" data-act="dowipe">비우기</button></div>`);
 }
 const CAM = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg>';
+const MAX_PHOTOS = 3;
+/* Photos as a list (older meetings had a single photo/photoBy). */
+const photosOf = m => m.photos || (m.photo ? [{ id: 'legacy', url: m.photo, by: m.photoBy || null }] : []);
 function photoBlock(m) {
-  if (!m.photo) return `<button class="photo-empty" data-act="photo" data-v="${m.id}">${CAM}<b>모임 사진 올리기</b><span>모임마다 한 장씩 남길 수 있어요</span></button>`;
-  return `<figure class="photo"><img src="${m.photo}" alt="${esc(m.title)} 사진">
-    <figcaption>${m.photoBy ? `<span>${ro2(M[m.photoBy].name)} 올렸어요</span>` : '<span></span>'}
-      <span class="photo-btns"><button class="chipbtn" data-act="photo" data-v="${m.id}">바꾸기</button><button class="chipbtn" data-act="photodel" data-v="${m.id}">삭제</button></span></figcaption></figure>`;
+  const ps = photosOf(m);
+  if (!ps.length) return `<button class="photo-empty" data-act="photo" data-v="${m.id}">${CAM}<b>모임 사진 올리기</b><span>모임마다 ${MAX_PHOTOS}장까지 남길 수 있어요</span></button>`;
+  return `<div class="gallery ${ps.length === 1 ? 'one' : ''}">${ps.map((p, i) => `<figure class="photo"><img src="${p.url}" alt="${esc(m.title)} 사진 ${i + 1}" loading="lazy">
+      <figcaption><span>${p.by && M[p.by] ? `${ro2(M[p.by].name)} 올렸어요` : ''}${ps.length > 1 ? ` · ${i + 1}/${ps.length}` : ''}</span>
+      <button class="chipbtn" data-act="photodel" data-v="${m.id}" data-p="${p.id}">삭제</button></figcaption></figure>`).join('')}</div>
+    ${ps.length < MAX_PHOTOS ? `<button class="btn plain photo-add" data-act="photo" data-v="${m.id}">${CAM}사진 추가 <span class="pc">${ps.length}/${MAX_PHOTOS}</span></button>` : ''}`;
 }
 const ro2 = w => ga(w);
 let photoFor = null;
 const $photoIn = document.getElementById('photo-in');
 function pickPhoto(id) { if (!S.me) { pendingAfterPick = 'photo:' + id; sheetWho(); return; } photoFor = id; $photoIn.value = ''; $photoIn.click(); }
-$photoIn.addEventListener('change', async () => {
-  const f = $photoIn.files && $photoIn.files[0], m = byId(photoFor); if (!f || !m) return;
+async function shrink(f) {
+  const url = URL.createObjectURL(f), img = new Image();
   try {
-    const url = URL.createObjectURL(f), img = new Image();
     await new Promise((ok, no) => { img.onload = ok; img.onerror = no; img.src = url; });
     const max = 1200, k = Math.min(1, max / Math.max(img.naturalWidth, img.naturalHeight));
     const c = document.createElement('canvas'); c.width = Math.round(img.naturalWidth * k); c.height = Math.round(img.naturalHeight * k);
-    c.getContext('2d').drawImage(img, 0, 0, c.width, c.height); URL.revokeObjectURL(url);
-    const data = c.toDataURL('image/jpeg', 0.8);
+    c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+    return c.toDataURL('image/jpeg', 0.8);
+  } finally { URL.revokeObjectURL(url); }
+}
+$photoIn.addEventListener('change', async () => {
+  const m = byId(photoFor); if (!m) return;
+  const room = MAX_PHOTOS - photosOf(m).length;
+  const files = [...($photoIn.files || [])].slice(0, Math.max(0, room)); if (!files.length) return;
+  if ($photoIn.files.length > room) toast(`사진은 ${MAX_PHOTOS}장까지라 ${room}장만 올릴게요`);
+  let done = 0;
+  for (const f of files) {
+    let data;
+    try { data = await shrink(f); } catch (e) { toast('사진을 열 수 없어요. 다른 사진으로 해볼래요?'); continue; }
     if (MODE === 'server') {
-      toast('사진을 올리는 중이에요…');
-      if (await commit({ type: 'photo', mid: m.id, by: S.me, data })) { render(); toast('모임 사진을 올렸어요'); }
-      return;
+      toast(files.length > 1 ? `사진을 올리는 중이에요… (${done + 1}/${files.length})` : '사진을 올리는 중이에요…');
+      if (!(await commit({ type: 'photo', mid: m.id, by: S.me, data }))) break;
+    } else {
+      const mm = byId(m.id), prev = photosOf(mm);
+      mm.photos = [...prev, { id: 'p' + Date.now() + done, url: data, by: S.me }]; delete mm.photo; delete mm.photoBy;
+      if (!save()) { mm.photos = prev; toast('저장 공간이 부족해요. 다른 사진을 지운 뒤 다시 올려주세요.'); break; }
     }
-    const prev = [m.photo, m.photoBy];
-    m.photo = data; m.photoBy = S.me;
-    if (!save()) { [m.photo, m.photoBy] = prev; toast('저장 공간이 부족해요. 다른 사진을 지운 뒤 다시 올려주세요.'); return; }
-    render(); toast('모임 사진을 올렸어요');
-  } catch (e) { toast('사진을 열 수 없어요. 다른 사진으로 해볼래요?'); }
+    done++; render();
+  }
+  if (done) toast(done > 1 ? `사진 ${done}장을 올렸어요` : '모임 사진을 올렸어요');
 });
-function sheetPhotoDel(id) {
-  openSheet(`<h2>모임 사진을 지울까요?</h2><p class="sub">지우면 지난 모임 목록에서도 사라져요.</p>
-    <div class="row-btns"><button class="btn plain" data-act="close">취소</button><button class="btn pri" data-act="dophotodel" data-v="${id}">지우기</button></div>`);
+function sheetPhotoDel(id, pid) {
+  openSheet(`<h2>이 사진을 지울까요?</h2><p class="sub">지운 사진은 되돌릴 수 없어요.</p>
+    <div class="row-btns"><button class="btn plain" data-act="close">취소</button><button class="btn del-solid" data-act="dophotodel" data-v="${id}" data-p="${pid}">지우기</button></div>`);
 }
 function sheetReset() {
   openSheet(`<h2>예시 데이터로 되돌릴까요?</h2><p class="sub">이 폰에서 바꾼 내용이 모두 지워져요. 프로토타입이라 다른 사람에겐 영향이 없어요.</p>
@@ -1086,11 +1113,13 @@ document.addEventListener('click', e => {
       break;
     }
     case 'photo': pickPhoto(v); break;
-    case 'photodel': sheetPhotoDel(v); break;
-    case 'dophotodel':
-      commit({ type: 'photodel', mid: v }, () => { const m = byId(v); m.photo = null; m.photoBy = null; })
+    case 'photodel': sheetPhotoDel(v, t.dataset.p); break;
+    case 'dophotodel': {
+      const pid = t.dataset.p;
+      commit({ type: 'photodel', mid: v, pid }, () => { const m = byId(v); m.photos = photosOf(m).filter(p => p.id !== pid); delete m.photo; delete m.photoBy; })
         .then(ok => { if (ok) { closeSheet(); render(); toast('사진을 지웠어요'); } });
       break;
+    }
     case 'reset': if (MODE === 'local') sheetReset(); break;
     case 'wipe': if (MODE === 'local') sheetWipe(); break;
     case 'dowipe': if (MODE !== 'local') break; S = { me: null, meetings: [] }; save(); closeSheet(); go('home'); toast('처음 상태로 비웠어요'); break;

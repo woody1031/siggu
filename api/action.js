@@ -1,4 +1,4 @@
-import { MEMBERS, configured, pairs, pipeline, readMeetings, readState, redis, saveMeeting, send } from './_db.js';
+import { MAX_PHOTOS, MEMBERS, configured, pairs, photoKey, photosOf, pipeline, readMeetings, readState, redis, saveMeeting, send } from './_db.js';
 
 // POST /api/action { type, ... } -> applies one change, returns the full new state.
 const DATE = /^\d{4}-\d{2}-\d{2}$/;
@@ -15,7 +15,7 @@ async function apply(op) {
   const meetings = await readMeetings();
   const list = Object.values(meetings);
   const m = op.mid ? meetings[op.mid] : null;
-  if (op.type !== 'create') need(m, '모임을 찾을 수 없어요. 새로고침해 주세요.');
+  if (op.type !== 'create' && op.type !== 'record') need(m, '모임을 찾을 수 없어요. 새로고침해 주세요.');
   if ('member' in op || 'by' in op) need(MEMBERS.includes(op.member ?? op.by), '누구인지 먼저 골라주세요.');
 
   switch (op.type) {
@@ -54,8 +54,28 @@ async function apply(op) {
       return {};
     }
     case 'delete': {
-      await pipeline([['HDEL', 'meetings', m.id], ['DEL', `avail:${m.id}`], ['DEL', `photo:${m.id}`]]);
+      const keys = new Set([`photo:${m.id}`, ...photosOf(m).map(p => photoKey(m.id, p.id))]);
+      await pipeline([['HDEL', 'meetings', m.id], ['DEL', `avail:${m.id}`], ...[...keys].map(k => ['DEL', k])]);
       return {};
+    }
+    case 'record': {
+      // Add a meeting that already happened (date confirmed), without touching the current one.
+      need(DATE.test(op.date), '날짜를 다시 골라주세요.');
+      const time = clean(op.time, 5), place = clean(op.place, 40);
+      need(!time || TIME.test(time), '시간을 다시 골라주세요.');
+      const [y, mo] = op.date.split('-').map(Number);
+      const start = `${op.date.slice(0, 8)}01`, end = `${op.date.slice(0, 8)}${String(new Date(y, mo, 0).getDate()).padStart(2, '0')}`;
+      const fresh = {
+        id: `m${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`,
+        year: y, round: 0, title: clean(op.title, 20) || '모임', start, end, confirmed: op.date, status: 'confirmed',
+        time, place, log: [], photos: [], createdAt: Date.parse(`${op.date}T12:00:00+09:00`),
+      };
+      // Rounds in that year follow the meeting dates.
+      const sameYear = [...list.filter(x => x.year === y), fresh]
+        .sort((a, b) => (a.confirmed || a.start).localeCompare(b.confirmed || b.start) || (a.createdAt || 0) - (b.createdAt || 0));
+      const writes = sameYear.map((x, i) => saveMeeting({ ...x, round: i + 1 }));
+      await pipeline(writes);
+      return { created: { ...fresh, round: sameYear.indexOf(fresh) + 1 } };
     }
     case 'avail': {
       need(Array.isArray(op.dates) && op.dates.length <= 400, '날짜를 다시 골라주세요.');
@@ -81,15 +101,22 @@ async function apply(op) {
       return {};
     }
     case 'photo': {
+      const photos = photosOf(m);
+      need(photos.length < MAX_PHOTOS, `사진은 모임마다 ${MAX_PHOTOS}장까지 올릴 수 있어요.`);
       const data = String(op.data || '');
       need(/^data:image\/(jpeg|png|webp);base64,/.test(data), '사진 파일만 올릴 수 있어요.');
       need(data.length <= MAX_PHOTO, '사진이 너무 커요. 다른 사진으로 해볼래요?');
-      const url = `/api/photo?mid=${m.id}&v=${Date.now().toString(36)}`;
-      await pipeline([['SET', `photo:${m.id}`, data], saveMeeting({ ...m, photo: url, photoBy: op.by })]);
-      return {};
+      const pid = `p${Date.now().toString(36)}${Math.random().toString(36).slice(2, 5)}`;
+      const { photo, photoBy, ...rest } = m;
+      const next = { ...rest, photos: [...photos, { id: pid, url: `/api/photo?mid=${m.id}&pid=${pid}`, by: op.by }] };
+      await pipeline([['SET', photoKey(m.id, pid), data], saveMeeting(next)]);
+      return { photoId: pid };
     }
     case 'photodel': {
-      await pipeline([['DEL', `photo:${m.id}`], saveMeeting({ ...m, photo: null, photoBy: null })]);
+      const photos = photosOf(m), pid = String(op.pid || (photos[0] && photos[0].id) || '');
+      need(photos.some(p => p.id === pid), '사진을 찾을 수 없어요. 새로고침해 주세요.');
+      const { photo, photoBy, ...rest } = m;
+      await pipeline([['DEL', photoKey(m.id, pid)], saveMeeting({ ...rest, photos: photos.filter(p => p.id !== pid) })]);
       return {};
     }
     default:
