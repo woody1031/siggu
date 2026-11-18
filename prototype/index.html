@@ -165,6 +165,11 @@ h1,h2,h3{text-wrap:balance}
 .burst i{position:absolute;left:-2.5px;top:-2.5px;width:5px;height:6px;border-radius:1px;background:var(--c);opacity:0}
 .members.intro .fig.bday-on .burst i{animation:pop .9s cubic-bezier(.15,.7,.3,1) both;animation-delay:calc(400ms + var(--i, 0) * 70ms + var(--j, 0) * 25ms)}
 .prof .fig.bday-on .burst i{animation:pop .9s cubic-bezier(.15,.7,.3,1) both;animation-delay:calc(250ms + var(--j, 0) * 25ms)}
+.members.intro .mem.cheer .fig .char{animation:drop .34s cubic-bezier(.25,.8,.35,1) both,cheer .26s ease-in-out 2;animation-delay:calc(60ms + var(--i, 0) * 70ms),calc(420ms + var(--bi, 0) * 70ms)}
+.mem.cheer .char::after{content:"짝짝";position:absolute;left:96%;top:2%;font-size:11px;font-weight:700;letter-spacing:-.02em;white-space:nowrap;color:var(--brand-weak-fg);line-height:1;opacity:0;transform:translate(-50%,0) scale(.5);pointer-events:none}
+.members.intro .mem.cheer .char::after{animation:clap .9s ease-out both;animation-delay:calc(420ms + var(--bi, 0) * 70ms)}
+@keyframes cheer{0%,100%{transform:none}50%{transform:translateY(-4px)}}
+@keyframes clap{0%{opacity:0;transform:translate(-50%,4px) scale(.5) rotate(0)}18%{opacity:1;transform:translate(-50%,-6px) scale(1) rotate(-12deg)}36%{transform:translate(-50%,-8px) scale(.9) rotate(10deg)}54%{transform:translate(-50%,-10px) scale(1) rotate(-8deg)}80%{opacity:1}100%{opacity:0;transform:translate(-50%,-16px) scale(.9) rotate(0)}}
 @keyframes pop{0%{opacity:0;transform:translate(0,0) scale(.3) rotate(0)}12%{opacity:1}70%{opacity:1}100%{opacity:0;transform:translate(var(--x),calc(var(--y) + 10px)) scale(1) rotate(var(--r))}}
 @keyframes drop{0%{transform:translateY(-14px);opacity:0}55%{opacity:1}75%{transform:translateY(1.5px)}100%{transform:none}}
 .mem .nm{font-weight:600;line-height:1.2;font-size:13px}
@@ -516,7 +521,9 @@ body{letter-spacing:-.01em}
   /* exception: the small 14px character drop still plays (owner's choice) */
   .members.intro .fig .char{animation:drop .34s cubic-bezier(.25,.8,.35,1) both!important;animation-delay:calc(60ms + var(--i, 0) * 70ms)!important}
   .members.intro .fig.bday-on .burst i{animation:pop .9s cubic-bezier(.15,.7,.3,1) both!important;animation-delay:calc(400ms + var(--i, 0) * 70ms + var(--j, 0) * 25ms)!important}
-  .prof .fig.bday-on .burst i{animation:pop .9s cubic-bezier(.15,.7,.3,1) both!important;animation-delay:calc(250ms + var(--j, 0) * 25ms)!important}}
+  .prof .fig.bday-on .burst i{animation:pop .9s cubic-bezier(.15,.7,.3,1) both!important;animation-delay:calc(250ms + var(--j, 0) * 25ms)!important}
+  .members.intro .mem.cheer .fig .char{animation:drop .34s cubic-bezier(.25,.8,.35,1) both,cheer .26s ease-in-out 2!important;animation-delay:calc(60ms + var(--i, 0) * 70ms),calc(420ms + var(--bi, 0) * 70ms)!important}
+  .members.intro .mem.cheer .char::after{animation:clap .9s ease-out both!important;animation-delay:calc(420ms + var(--bi, 0) * 70ms)!important}}
 </style>
 
 <div class="app" id="app"></div>
@@ -566,6 +573,10 @@ const BURST = (() => {
   }
   return h + '</span>';
 })();
+/* the first birthday-month character on the stage; the others clap when their confetti pops */
+const bdayIdx = () => MEMBERS.findIndex(x => x.img && bdayLevel(x) === 'on');
+const cheers = i => { const b = bdayIdx(); return b >= 0 && i !== b; };
+const membersOpen = () => { const b = bdayIdx(); return `<div class="members ${introDone ? '' : 'intro'} ${b >= 0 ? 'has-bday' : ''}" ${b >= 0 ? `style="--bi:${b}"` : ''}>`; };
 function figure(x, ok, alt) {
   const lv = x.img ? bdayLevel(x) : '', hat = !!lv;
   const inner = x.img ? `<span class="char">${hat ? `<span class="hat-wrap ${lv}" style="--hx:${x.hat.x}%;--hy:${x.hat.y}%">${hatSvg(x.id)}</span>` : ''}<img src="${esc(x.img)}" alt="${alt}${lv === 'on' ? ' (생일 달)' : lv === 'near' ? ' (생일 즈음)' : ''}"></span>` : `<span class="emo" aria-hidden="true">${x.emoji}</span>`;
@@ -773,7 +784,7 @@ function vEmpty() {
     <div class="eyebrow">${new Date().getFullYear()}년 · 첫 모임 전</div>
     <h2 class="h2">아직 모임이 없어요</h2>
     <p class="range" style="font-size:14px">모임을 만들고 후보 기간을 정하면, 식구들이 각자 되는 날을 찍을 수 있어요.</p>
-    <div class="members ${introDone ? '' : 'intro'}">${MEMBERS.map((x, i) => `<div class="mem pending ${x.id === S.me ? 'me' : ''}" style="--i:${i}" role="button" tabindex="0" data-act="profile" data-v="${x.id}" aria-label="${x.name} 프로필">${figure(x, false, x.name)}<span class="nm">${x.name}</span><span class="st">기다리는 중</span></div>`).join('')}</div>
+    ${membersOpen()}${MEMBERS.map((x, i) => `<div class="mem pending ${x.id === S.me ? 'me' : ''} ${cheers(i) ? 'cheer' : ''}" style="--i:${i}" role="button" tabindex="0" data-act="profile" data-v="${x.id}" aria-label="${x.name} 프로필">${figure(x, false, x.name)}<span class="nm">${x.name}</span><span class="st">기다리는 중</span></div>`).join('')}</div>
     <ol class="steps">
       <li><b>모임 만들기</b><span>이름과 후보 기간만 정하면 돼요</span></li>
       <li><b>되는 날 찍기</b><span>식구마다 캘린더에서 쉬는 날을 눌러요</span></li>
@@ -801,7 +812,7 @@ function vHome() {
     <h2 class="h2">${esc(m.title)}</h2>
     <p class="range">후보 ${fmt(m.start)} ~ ${fmt(m.end)}</p>
     ${m.confirmed ? planBlock(m) : ''}
-    <div class="members ${introDone ? '' : 'intro'}">${MEMBERS.map((x, i) => { const ok = ent.includes(x.id); return `<div class="mem ${x.id === meIn ? 'me' : ''} ${ok ? '' : 'pending'}" style="--i:${i}" role="button" tabindex="0" data-act="profile" data-v="${x.id}" aria-label="${x.name} 프로필">${figure(x, ok, x.name + (ok ? '' : ' (아직)'))}<span class="nm">${x.name}</span><span class="st ${ok ? 'ok' : ''}">${ok ? '완료' : '아직'}</span></div>`; }).join('')}</div>
+    ${membersOpen()}${MEMBERS.map((x, i) => { const ok = ent.includes(x.id); return `<div class="mem ${x.id === meIn ? 'me' : ''} ${ok ? '' : 'pending'} ${cheers(i) ? 'cheer' : ''}" style="--i:${i}" role="button" tabindex="0" data-act="profile" data-v="${x.id}" aria-label="${x.name} 프로필">${figure(x, ok, x.name + (ok ? '' : ' (아직)'))}<span class="nm">${x.name}</span><span class="st ${ok ? 'ok' : ''}">${ok ? '완료' : '아직'}</span></div>`; }).join('')}</div>
     ${!m.confirmed && top ? `<div class="best"><span class="k">지금 가장 좋은 날</span><b>${fmt(top.d)}</b><span style="margin-left:auto;color:var(--accent);font-weight:700">${top.who.length}명</span></div>` : ''}
     <div class="btns">
       <button class="btn ${m.confirmed ? 'sec' : 'pri'}" data-act="enter">${meIn && ent.includes(meIn) ? '내 날짜 수정' : '내 날짜 입력'}</button>
