@@ -46,7 +46,9 @@ export async function readState() {
   if (!meetings.length) return { meetings: [] };
   const avails = await pipeline(meetings.map(m => ['HGETALL', `avail:${m.id}`]));
   meetings.forEach((m, i) => {
-    m.photos = photosOf(m); delete m.photo; delete m.photoBy;
+    m.photos = photosOf(m);
+    // Pages opened before multi-photo read a single photo/photoBy; keep sending the first one for them.
+    m.photo = m.photos[0] ? m.photos[0].url : null; m.photoBy = m.photos[0] ? m.photos[0].by : null;
     const a = pairs(avails[i]);
     m.avail = Object.fromEntries(Object.entries(a).map(([member, json]) => [member, JSON.parse(json)]));
   });
