@@ -161,6 +161,11 @@ h1,h2,h3{text-wrap:balance}
 .fig .emo{position:relative;z-index:1;font-size:30px;line-height:1;margin-bottom:14%}
 .fig.sil .char img,.fig.sil .emo{filter:var(--sil-filter);opacity:var(--sil-op)}
 .members.intro .fig .char{animation:drop .34s cubic-bezier(.25,.8,.35,1) both;animation-delay:calc(60ms + var(--i, 0) * 70ms)}
+.burst{position:absolute;left:50%;top:14%;width:0;height:0;z-index:3;pointer-events:none}
+.burst i{position:absolute;left:-2.5px;top:-2.5px;width:5px;height:6px;border-radius:1px;background:var(--c);opacity:0}
+.members.intro .fig.bday-on .burst i{animation:pop .9s cubic-bezier(.15,.7,.3,1) both;animation-delay:calc(400ms + var(--i, 0) * 70ms + var(--j, 0) * 25ms)}
+.prof .fig.bday-on .burst i{animation:pop .9s cubic-bezier(.15,.7,.3,1) both;animation-delay:calc(250ms + var(--j, 0) * 25ms)}
+@keyframes pop{0%{opacity:0;transform:translate(0,0) scale(.3) rotate(0)}12%{opacity:1}70%{opacity:1}100%{opacity:0;transform:translate(var(--x),calc(var(--y) + 10px)) scale(1) rotate(var(--r))}}
 @keyframes drop{0%{transform:translateY(-14px);opacity:0}55%{opacity:1}75%{transform:translateY(1.5px)}100%{transform:none}}
 .mem .nm{font-weight:600;line-height:1.2;font-size:13px}
 .mem.pending .nm{color:var(--muted);font-weight:500}
@@ -509,7 +514,9 @@ body{letter-spacing:-.01em}
 
 @media (prefers-reduced-motion: reduce){*{transition:none!important;animation:none!important}
   /* exception: the small 14px character drop still plays (owner's choice) */
-  .members.intro .fig .char{animation:drop .34s cubic-bezier(.25,.8,.35,1) both!important;animation-delay:calc(60ms + var(--i, 0) * 70ms)!important}}
+  .members.intro .fig .char{animation:drop .34s cubic-bezier(.25,.8,.35,1) both!important;animation-delay:calc(60ms + var(--i, 0) * 70ms)!important}
+  .members.intro .fig.bday-on .burst i{animation:pop .9s cubic-bezier(.15,.7,.3,1) both!important;animation-delay:calc(400ms + var(--i, 0) * 70ms + var(--j, 0) * 25ms)!important}
+  .prof .fig.bday-on .burst i{animation:pop .9s cubic-bezier(.15,.7,.3,1) both!important;animation-delay:calc(250ms + var(--j, 0) * 25ms)!important}}
 </style>
 
 <div class="app" id="app"></div>
@@ -549,10 +556,20 @@ const bdayLevel = x => {
   return bd === prev || bd === next ? 'near' : '';
 };
 const hatSvg = id => `<svg class="hat" viewBox="0 0 40 54" aria-hidden="true"><defs><clipPath id="hc-${id}"><path d="M20 9 L35 47 Q20 53 5 47 Z"/></clipPath></defs><g clip-path="url(#hc-${id})"><rect width="40" height="54" fill="#FF8FAB"/><path d="M0 22 L40 15 L40 21 L0 28Z M0 36 L40 29 L40 35 L0 42Z" fill="#FFD43B"/><circle cx="13" cy="31" r="1.6" fill="#4DABF7"/><circle cx="25" cy="25" r="1.6" fill="#4DABF7"/><circle cx="22" cy="44" r="1.6" fill="#4DABF7"/></g><path d="M5 47 Q20 53 35 47" fill="none" stroke="#E64980" stroke-width="2.4" stroke-linecap="round"/><circle cx="20" cy="8" r="5.5" fill="#FFD43B"/></svg>`;
+/* little confetti pop above a birthday-month character: 12 bits fanned out, mostly upward */
+const BURST = (() => {
+  const colors = ['#FF6600', '#FFD43B', '#FF8FAB', '#4DABF7', '#22B27F', '#B197FC'];
+  let h = '<span class="burst" aria-hidden="true">';
+  for (let j = 0; j < 12; j++) {
+    const a = (-90 + (j - 5.5) * 24) * Math.PI / 180, d = 22 + (j % 3) * 7;
+    h += `<i style="--c:${colors[j % colors.length]};--x:${(Math.cos(a) * d).toFixed(1)}px;--y:${(Math.sin(a) * d).toFixed(1)}px;--r:${(j % 2 ? 1 : -1) * (90 + j * 20)}deg;--j:${j % 4}${j % 3 === 0 ? ';border-radius:50%' : ''}"></i>`;
+  }
+  return h + '</span>';
+})();
 function figure(x, ok, alt) {
   const lv = x.img ? bdayLevel(x) : '', hat = !!lv;
   const inner = x.img ? `<span class="char">${hat ? `<span class="hat-wrap ${lv}" style="--hx:${x.hat.x}%;--hy:${x.hat.y}%">${hatSvg(x.id)}</span>` : ''}<img src="${esc(x.img)}" alt="${alt}${lv === 'on' ? ' (생일 달)' : lv === 'near' ? ' (생일 즈음)' : ''}"></span>` : `<span class="emo" aria-hidden="true">${x.emoji}</span>`;
-  return `<div class="fig ${ok ? '' : 'sil'} ${hat ? 'bday' : ''}" style="--s:${x.scale || 1}">${inner}</div>`;
+  return `<div class="fig ${ok ? '' : 'sil'} ${hat ? 'bday' : ''} ${lv === 'on' ? 'bday-on' : ''}" style="--s:${x.scale || 1}">${lv === 'on' ? BURST : ''}${inner}</div>`;
 }
 const M = Object.fromEntries(MEMBERS.map(m => [m.id, m]));
 const HOL = { '01-01':'신정','03-01':'삼일절','05-05':'어린이날','06-06':'현충일','08-15':'광복절','10-03':'개천절','10-09':'한글날','12-25':'성탄절' };
