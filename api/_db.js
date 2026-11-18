@@ -5,6 +5,8 @@
 //   avail:<meetingId> hash  memberId  -> JSON array of 'YYYY-MM-DD'
 //   photo:<meetingId>:<photoId> string  JPEG data URL (up to 3 photos per meeting)
 //   photo:<meetingId>     string        older single photo, shown as photo id 'legacy'
+//   profiles          hash  memberId  -> { birthday 'MM-DD', phone, bio, updatedAt }
+// Photos uploaded through Vercel Blob keep only their URLs here: url (display), thumb, orig (original file).
 
 const REDIS_URL = process.env.KV_REST_API_URL || process.env.UPSTASH_REDIS_REST_URL;
 const REDIS_TOKEN = process.env.KV_REST_API_TOKEN || process.env.UPSTASH_REDIS_REST_TOKEN;
@@ -43,7 +45,9 @@ export async function readMeetings() {
 // Full state the page needs: newest meeting first, each with its availability.
 export async function readState() {
   const meetings = Object.values(await readMeetings());
-  if (!meetings.length) return { meetings: [] };
+  const profiles = Object.fromEntries(Object.entries(pairs(await redis('HGETALL', 'profiles'))).map(([k, v]) => [k, JSON.parse(v)]));
+  const features = { blob: blobEnabled(), maxPhotos: MAX_PHOTOS };
+  if (!meetings.length) return { meetings: [], profiles, features };
   const avails = await pipeline(meetings.map(m => ['HGETALL', `avail:${m.id}`]));
   meetings.forEach((m, i) => {
     m.photos = photosOf(m);
@@ -53,10 +57,12 @@ export async function readState() {
     m.avail = Object.fromEntries(Object.entries(a).map(([member, json]) => [member, JSON.parse(json)]));
   });
   meetings.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0) || b.year - a.year || b.round - a.round);
-  return { meetings };
+  return { meetings, profiles, features };
 }
 
-export const MAX_PHOTOS = 3;
+export const MAX_PHOTOS = 5;
+export const blobEnabled = () => Boolean(process.env.BLOB_READ_WRITE_TOKEN);
+export const BLOB_URL = /^https:\/\/[a-z0-9]+\.public\.blob\.vercel-storage\.com\/[^\s"'<>]+$/i;
 export const photoKey = (mid, pid) => (pid === 'legacy' ? `photo:${mid}` : `photo:${mid}:${pid}`);
 // Photos as a list; meetings saved before multi-photo had a single photo/photoBy.
 export const photosOf = m => m.photos || (m.photo ? [{ id: 'legacy', url: m.photo, by: m.photoBy || null }] : []);

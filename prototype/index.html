@@ -412,6 +412,22 @@ body{letter-spacing:-.01em}
 .chipbtn:hover,.chipbtn:active{background:var(--pressed)}
 .me-chip{height:36px;border:0;border-radius:9999px;background:var(--surface);box-shadow:inset 0 0 0 1px var(--line-muted);font-weight:500}
 .edit-chip{height:28px;font-size:12px}
+.mem[role="button"]{cursor:pointer;border-radius:var(--radius-md);-webkit-tap-highlight-color:transparent}
+.mem[role="button"]:active .fig .char{transform:scale(.94);transition:transform .1s}
+.mem[role="button"]:focus-visible{outline:2px solid var(--ring);outline-offset:2px}
+.prof{display:grid;justify-items:center;text-align:center;margin-top:4px}
+.prof .fig{width:132px;margin-bottom:8px}
+.prof h2{display:flex;align-items:center;gap:6px}
+.me-tag{font-size:12px;font-weight:700;padding:2px 6px;border-radius:var(--radius-sm);background:var(--brand-weak);color:var(--brand-weak-fg)}
+.prof .sub{margin-top:2px}
+.prof-list{margin:20px 0 0;display:grid;border-top:1px solid var(--line)}
+.prof-list>div{display:grid;grid-template-columns:84px minmax(0,1fr);gap:12px;align-items:center;padding:14px 2px;border-bottom:1px solid var(--line)}
+.prof-list dt{font-size:14px;color:var(--subtle)}
+.prof-list dd{margin:0;font-size:16px;font-weight:500;display:flex;align-items:center;gap:10px;flex-wrap:wrap;overflow-wrap:anywhere}
+.prof-list dd a{color:var(--ink);text-decoration:underline;text-underline-offset:3px}
+.prof-list .unset{color:var(--subtle);font-weight:400;font-size:15px}
+.hint{font-size:12px;color:var(--subtle);margin:0}
+.field .hint{justify-self:end}
 .hdr-actions{display:flex;align-items:center;gap:8px}
 .theme-btn{width:36px;height:36px;flex:none;display:grid;place-items:center;border:0;border-radius:9999px;background:var(--surface);box-shadow:inset 0 0 0 1px var(--line-muted);color:var(--ink);cursor:pointer;padding:0}
 .theme-btn svg{width:20px;height:20px}
@@ -518,10 +534,12 @@ const eun = w => w + (hasBatchim(w) ? '은' : '는');
 const ro = w => { const c = w.charCodeAt(w.length - 1) - 0xAC00; return w + (hasBatchim(w) && c % 28 !== 8 ? '으로' : '로'); };
 /* 생일 달에는 꼬깔모자, 생일 전달·다음달에는 반투명 꼬깔모자를 써요. 미리보기: 주소 뒤에 ?month=10 처럼 붙이면 그 달로 보여요. */
 const MONTH = (() => { const q = new URLSearchParams(location.search).get('month'); const n = Number(q); return q === 'all' ? 'all' : (n >= 1 && n <= 12 ? n : new Date().getMonth() + 1); })();
+const bdayOf = x => { const b = ((typeof S !== 'undefined' && S.profiles) || {})[x.id]; return b && b.birthday ? Number(b.birthday.slice(0, 2)) : x.bday; };
 const bdayLevel = x => {
-  if (MONTH === 'all' || x.bday === MONTH) return 'on';
+  const bd = bdayOf(x);
+  if (MONTH === 'all' || bd === MONTH) return 'on';
   const prev = MONTH === 1 ? 12 : MONTH - 1, next = MONTH === 12 ? 1 : MONTH + 1;
-  return x.bday === prev || x.bday === next ? 'near' : '';
+  return bd === prev || bd === next ? 'near' : '';
 };
 const hatSvg = id => `<svg class="hat" viewBox="0 0 40 54" aria-hidden="true"><defs><clipPath id="hc-${id}"><path d="M20 9 L35 47 Q20 53 5 47 Z"/></clipPath></defs><g clip-path="url(#hc-${id})"><rect width="40" height="54" fill="#FF8FAB"/><path d="M0 22 L40 15 L40 21 L0 28Z M0 36 L40 29 L40 35 L0 42Z" fill="#FFD43B"/><circle cx="13" cy="31" r="1.6" fill="#4DABF7"/><circle cx="25" cy="25" r="1.6" fill="#4DABF7"/><circle cx="22" cy="44" r="1.6" fill="#4DABF7"/></g><path d="M5 47 Q20 53 35 47" fill="none" stroke="#E64980" stroke-width="2.4" stroke-linecap="round"/><circle cx="20" cy="8" r="5.5" fill="#FFD43B"/></svg>`;
 function figure(x, ok, alt) {
@@ -552,6 +570,7 @@ function seed() {
   const L = a => a.map(w);
   return {
     me: null,
+    profiles: { fox: { birthday: '01-14', phone: '010-1234-5678', bio: '여우는 사실 순해요' } },
     meetings: [
       { id: 'm2026-3', year: 2026, round: 3, title: '겨울 모임', start: '2026-12-01', end: '2027-01-31', confirmed: null, status: 'voting',
         avail: {
@@ -604,6 +623,8 @@ async function api(op) {
   const j = await r.json().catch(() => ({}));
   if (!r.ok) throw new Error(j.error || '저장하지 못했어요. 잠시 뒤 다시 해주세요.');
   S.meetings = j.meetings;
+  if (j.profiles) S.profiles = j.profiles;
+  if (j.features) S.features = j.features;
   return j;
 }
 /* Server mode: send the change, then use the state the server returns. Local mode: change here and save. */
@@ -615,7 +636,7 @@ async function commit(op, local) {
 async function boot() {
   try {
     const r = await fetch('/api/state', { cache: 'no-store' });
-    if (r.ok) { const j = await r.json(); MODE = 'server'; S = { me: readMe(), meetings: j.meetings || [] }; }
+    if (r.ok) { const j = await r.json(); MODE = 'server'; S = { me: readMe(), meetings: j.meetings || [], profiles: j.profiles || {}, features: j.features || {} }; }
     else if (LOCAL_PREVIEW && (r.status === 404 || r.status === 503)) { MODE = 'local'; S = load(); }
     else { MODE = 'error'; bootError = (await r.json().catch(() => ({}))).error || ''; }
   } catch (e) { MODE = LOCAL_PREVIEW ? 'local' : 'error'; if (MODE === 'local') S = load(); }
@@ -630,8 +651,8 @@ async function refresh() {
   if (MODE !== 'server' || view === 'input' || view === 'new' || !$scrim.hidden) return;
   try {
     const r = await fetch('/api/state', { cache: 'no-store' }); if (!r.ok) return;
-    const j = await r.json(), next = JSON.stringify(j.meetings || []);
-    if (next !== JSON.stringify(S.meetings)) { S.meetings = j.meetings || []; render(); }
+    const j = await r.json(), next = JSON.stringify([j.meetings || [], j.profiles || {}]);
+    if (next !== JSON.stringify([S.meetings, S.profiles || {}])) { S.meetings = j.meetings || []; S.profiles = j.profiles || {}; S.features = j.features || S.features; render(); }
   } catch (e) {}
 }
 
@@ -728,7 +749,7 @@ function vEmpty() {
     <div class="eyebrow">${new Date().getFullYear()}년 · 첫 모임 전</div>
     <h2 class="h2">아직 모임이 없어요</h2>
     <p class="range" style="font-size:14px">모임을 만들고 후보 기간을 정하면, 식구들이 각자 되는 날을 찍을 수 있어요.</p>
-    <div class="members ${introDone ? '' : 'intro'}">${MEMBERS.map((x, i) => `<div class="mem pending ${x.id === S.me ? 'me' : ''}" style="--i:${i}">${figure(x, false, x.name)}<span class="nm">${x.name}</span><span class="st">기다리는 중</span></div>`).join('')}</div>
+    <div class="members ${introDone ? '' : 'intro'}">${MEMBERS.map((x, i) => `<div class="mem pending ${x.id === S.me ? 'me' : ''}" style="--i:${i}" role="button" tabindex="0" data-act="profile" data-v="${x.id}" aria-label="${x.name} 프로필">${figure(x, false, x.name)}<span class="nm">${x.name}</span><span class="st">기다리는 중</span></div>`).join('')}</div>
     <ol class="steps">
       <li><b>모임 만들기</b><span>이름과 후보 기간만 정하면 돼요</span></li>
       <li><b>되는 날 찍기</b><span>식구마다 캘린더에서 쉬는 날을 눌러요</span></li>
@@ -756,7 +777,7 @@ function vHome() {
     <h2 class="h2">${esc(m.title)}</h2>
     <p class="range">후보 ${fmt(m.start)} ~ ${fmt(m.end)}</p>
     ${m.confirmed ? planBlock(m) : ''}
-    <div class="members ${introDone ? '' : 'intro'}">${MEMBERS.map((x, i) => { const ok = ent.includes(x.id); return `<div class="mem ${x.id === meIn ? 'me' : ''} ${ok ? '' : 'pending'}" style="--i:${i}">${figure(x, ok, x.name + (ok ? '' : ' (아직)'))}<span class="nm">${x.name}</span><span class="st ${ok ? 'ok' : ''}">${ok ? '완료' : '아직'}</span></div>`; }).join('')}</div>
+    <div class="members ${introDone ? '' : 'intro'}">${MEMBERS.map((x, i) => { const ok = ent.includes(x.id); return `<div class="mem ${x.id === meIn ? 'me' : ''} ${ok ? '' : 'pending'}" style="--i:${i}" role="button" tabindex="0" data-act="profile" data-v="${x.id}" aria-label="${x.name} 프로필">${figure(x, ok, x.name + (ok ? '' : ' (아직)'))}<span class="nm">${x.name}</span><span class="st ${ok ? 'ok' : ''}">${ok ? '완료' : '아직'}</span></div>`; }).join('')}</div>
     ${!m.confirmed && top ? `<div class="best"><span class="k">지금 가장 좋은 날</span><b>${fmt(top.d)}</b><span style="margin-left:auto;color:var(--accent);font-weight:700">${top.who.length}명</span></div>` : ''}
     <div class="btns">
       <button class="btn ${m.confirmed ? 'sec' : 'pri'}" data-act="enter">${meIn && ent.includes(meIn) ? '내 날짜 수정' : '내 날짜 입력'}</button>
@@ -765,7 +786,7 @@ function vHome() {
   </article>
   <div class="btns"><button class="btn ghost" data-act="new">+ 새 모임 만들기</button></div>
   ${recs.length ? `<h2 class="section-t">지난 모임</h2>${years.map(y => `<h3 class="year">${y}</h3><div class="records">${recs.filter(r => r.year === y).sort((a, b) => b.round - a.round).map(r => `
-      <button class="rec" data-act="result" data-v="${r.id}"><span class="rl"><span class="rthumb">${photosOf(r)[0] ? `<img src="${photosOf(r)[0].url}" alt="" loading="lazy">` : CAM}${photosOf(r).length > 1 ? `<span class="rcount">${photosOf(r).length}</span>` : ''}</span><span><span class="r1">${r.round}회차</span><br><span class="r2">${esc(r.title)}</span></span></span>
+      <button class="rec" data-act="result" data-v="${r.id}"><span class="rl"><span class="rthumb">${photosOf(r)[0] ? `<img src="${photosOf(r)[0].thumb || photosOf(r)[0].url}" alt="" loading="lazy">` : CAM}${photosOf(r).length > 1 ? `<span class="rcount">${photosOf(r).length}</span>` : ''}</span><span><span class="r1">${r.round}회차</span><br><span class="r2">${esc(r.title)}</span></span></span>
       <span class="rd ${r.confirmed ? '' : 'none'}">${r.confirmed ? fmt(r.confirmed) : '확정 없이 끝남'}${r.confirmed && (r.time || r.place) ? `<span class="rp">${[r.time && fmtTime(r.time), r.place && esc(r.place)].filter(Boolean).join(' · ')}</span>` : ''}</span></button>`).join('')}</div>`).join('')}` : ''}
   ${footer()}`;
 }
@@ -903,12 +924,68 @@ let sheetTimer = null;
 function openSheet(html) { clearTimeout(sheetTimer); $sheet.innerHTML = '<div class="grab"></div>' + html; $scrim.hidden = false; requestAnimationFrame(() => $scrim.classList.add('open')); }
 function closeSheet() { $scrim.classList.remove('open'); clearTimeout(sheetTimer); sheetTimer = setTimeout(() => { $scrim.hidden = true; }, 200); }
 $scrim.addEventListener('click', e => { if (e.target === $scrim) closeSheet(); });
-document.addEventListener('keydown', e => { if (e.key === 'Escape' && !$scrim.hidden) closeSheet(); });
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape' && !$scrim.hidden) closeSheet();
+  if ((e.key === 'Enter' || e.key === ' ') && e.target.matches && e.target.matches('[role="button"][data-act]')) { e.preventDefault(); e.target.click(); }
+});
 
 /* ---------- sheets ---------- */
 function sheetWho() {
   openSheet(`<h2>누구세요?</h2><p class="sub">한 번 고르면 이 폰에서 기억해요.</p>
-  <div class="who-grid">${MEMBERS.map(x => `<button class="pickme ${S.me === x.id ? 'on' : ''}" data-act="pickme" data-v="${x.id}">${av(x.id, 'lg')}${x.name}</button>`).join('')}</div>`);
+  <div class="who-grid">${MEMBERS.map(x => `<button class="pickme ${S.me === x.id ? 'on' : ''}" data-act="pickme" data-v="${x.id}">${av(x.id, 'lg')}${x.name}</button>`).join('')}</div>
+  ${S.me ? `<div class="btns"><button class="btn sec" data-act="editprofile">${M[S.me].name} 프로필 수정</button></div>` : ''}`);
+}
+/* ---------- profiles ---------- */
+const profileOf = id => ((S.profiles || {})[id]) || {};
+const fmtBirthday = b => b ? `${Number(b.slice(0, 2))}월 ${Number(b.slice(3, 5))}일` : '';
+function sheetProfile(id) {
+  const x = M[id], p = profileOf(id), mine = id === S.me, unset = '<span class="unset">아직 안 적었어요</span>';
+  const bd = p.birthday ? fmtBirthday(p.birthday) : `${x.bday}월 <span class="unset">· 날짜는 아직</span>`;
+  const tel = p.phone ? p.phone.replace(/[^0-9+]/g, '') : '';
+  openSheet(`<div class="prof">${figure(x, true, x.name)}<h2>${x.name}${mine ? ' <span class="me-tag">나</span>' : ''}</h2><p class="sub">${x.animal}</p></div>
+    <dl class="prof-list">
+      <div><dt>생일</dt><dd>${bd}${bdayLevel(x) === 'on' ? ' 🎂' : ''}</dd></div>
+      <div><dt>전화번호</dt><dd>${p.phone ? `<a href="tel:${tel}">${esc(p.phone)}</a><button class="chipbtn" data-act="copyphone" data-v="${esc(p.phone)}">복사</button>` : unset}</dd></div>
+      <div><dt>한 줄 소개</dt><dd>${p.bio ? esc(p.bio) : unset}</dd></div>
+    </dl>
+    ${mine ? `<div class="btns"><button class="btn sec" data-act="editprofile">내 프로필 수정</button></div>` : ''}`);
+}
+function fmtPhone(v) {
+  const d = v.replace(/\D/g, '').slice(0, 11);
+  if (d.startsWith('02')) return d.length > 9 ? `${d.slice(0, 2)}-${d.slice(2, 6)}-${d.slice(6)}` : d.length > 5 ? `${d.slice(0, 2)}-${d.slice(2, 5)}-${d.slice(5)}` : d;
+  return d.length > 10 ? `${d.slice(0, 3)}-${d.slice(3, 7)}-${d.slice(7)}` : d.length > 6 ? `${d.slice(0, 3)}-${d.slice(3, 6)}-${d.slice(6)}` : d.length > 3 ? `${d.slice(0, 3)}-${d.slice(3)}` : d;
+}
+function sheetProfileEdit() {
+  const id = S.me, x = M[id], p = profileOf(id);
+  const bm = p.birthday ? Number(p.birthday.slice(0, 2)) : x.bday, bdd = p.birthday ? Number(p.birthday.slice(3, 5)) : 0;
+  const opt = (n, sel, unit) => `<option value="${n}" ${n === sel ? 'selected' : ''}>${n}${unit}</option>`;
+  openSheet(`<h2>내 프로필</h2><p class="sub">식구들이 ${x.name} 캐릭터를 누르면 보여요.</p>
+    <form id="prf" novalidate>
+      <div class="field"><label for="pf-m">생일</label><div class="row2">
+        <select id="pf-m"><option value="">월</option>${Array.from({ length: 12 }, (_, i) => opt(i + 1, bm, '월')).join('')}</select>
+        <select id="pf-d" aria-label="생일 날짜"><option value="">일</option>${Array.from({ length: 31 }, (_, i) => opt(i + 1, bdd, '일')).join('')}</select></div></div>
+      <div class="field"><label for="pf-phone">전화번호</label><input id="pf-phone" type="tel" inputmode="numeric" autocomplete="tel" maxlength="13" placeholder="010-1234-5678" value="${esc(p.phone || '')}"></div>
+      <div class="field"><label for="pf-bio">한 줄 소개</label><input id="pf-bio" maxlength="40" placeholder="예: 맛집 찾는 걸 좋아해요" value="${esc(p.bio || '')}" autocomplete="off"><span class="hint" id="pf-n">${(p.bio || '').length}/40</span></div>
+      <p class="hint">전화번호는 사이트 주소를 아는 사람이면 누구나 볼 수 있어요.</p>
+      <p class="err" id="pf-err" hidden></p>
+      <div class="row-btns"><button type="button" class="btn plain" data-act="close">취소</button><button type="submit" class="btn pri">저장하기</button></div>
+    </form>`);
+  const ph = document.getElementById('pf-phone'), bio = document.getElementById('pf-bio');
+  ph.addEventListener('input', () => { ph.value = fmtPhone(ph.value); });
+  bio.addEventListener('input', () => { document.getElementById('pf-n').textContent = `${bio.value.length}/40`; });
+  document.getElementById('prf').addEventListener('submit', e => { e.preventDefault(); saveProfile(); });
+}
+async function saveProfile() {
+  const mo = document.getElementById('pf-m').value, d = document.getElementById('pf-d').value, er = document.getElementById('pf-err');
+  if (!!mo !== !!d) { er.textContent = '생일은 월과 일을 모두 골라주세요.'; er.hidden = false; return; }
+  if (mo && d && Number(d) > new Date(2024, Number(mo), 0).getDate()) { er.textContent = '그 달에는 없는 날짜예요.'; er.hidden = false; return; }
+  const birthday = mo ? `${pad(mo)}-${pad(d)}` : '';
+  const phone = document.getElementById('pf-phone').value.trim(), bio = document.getElementById('pf-bio').value.trim();
+  const ok = await commit({ type: 'profile', member: S.me, birthday, phone, bio }, () => {
+    S.profiles = S.profiles || {}; S.profiles[S.me] = { birthday, phone, bio };
+  });
+  if (!ok) return;
+  render(); sheetProfile(S.me); toast('프로필을 저장했어요');
 }
 function sheetDay(k) {
   const m = byId(viewMid) || cur(), ent = entered(m), who = dayMap(m)[k] || [];
@@ -961,30 +1038,46 @@ function sheetWipe() {
     <div class="row-btns"><button class="btn plain" data-act="close">취소</button><button class="btn pri" data-act="dowipe">비우기</button></div>`);
 }
 const CAM = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg>';
-const MAX_PHOTOS = 3;
+const MAX_PHOTOS = 5;
 /* Photos as a list (older meetings had a single photo/photoBy). */
 const photosOf = m => m.photos || (m.photo ? [{ id: 'legacy', url: m.photo, by: m.photoBy || null }] : []);
 function photoBlock(m) {
   const ps = photosOf(m);
   if (!ps.length) return `<button class="photo-empty" data-act="photo" data-v="${m.id}">${CAM}<b>모임 사진 올리기</b><span>모임마다 ${MAX_PHOTOS}장까지 남길 수 있어요</span></button>`;
-  return `<div class="gallery ${ps.length === 1 ? 'one' : ''}">${ps.map((p, i) => `<figure class="photo"><img src="${p.url}" alt="${esc(m.title)} 사진 ${i + 1}" loading="lazy">
+  return `<div class="gallery ${ps.length === 1 ? 'one' : ''}">${ps.map((p, i) => `<figure class="photo"><a href="${p.orig || p.url}" target="_blank" rel="noopener" aria-label="사진 ${i + 1} 원본 보기"><img src="${p.url}" alt="${esc(m.title)} 사진 ${i + 1}" loading="lazy"></a>
       <figcaption><span>${p.by && M[p.by] ? `${ro2(M[p.by].name)} 올렸어요` : ''}${ps.length > 1 ? ` · ${i + 1}/${ps.length}` : ''}</span>
-      <button class="chipbtn" data-act="photodel" data-v="${m.id}" data-p="${p.id}">삭제</button></figcaption></figure>`).join('')}</div>
+      <span class="photo-btns">${p.orig ? `<a class="chipbtn" href="${p.orig}" target="_blank" rel="noopener">원본</a>` : ''}<button class="chipbtn" data-act="photodel" data-v="${m.id}" data-p="${p.id}">삭제</button></span></figcaption></figure>`).join('')}</div>
     ${ps.length < MAX_PHOTOS ? `<button class="btn plain photo-add" data-act="photo" data-v="${m.id}">${CAM}사진 추가 <span class="pc">${ps.length}/${MAX_PHOTOS}</span></button>` : ''}`;
 }
 const ro2 = w => ga(w);
 let photoFor = null;
 const $photoIn = document.getElementById('photo-in');
 function pickPhoto(id) { if (!S.me) { pendingAfterPick = 'photo:' + id; sheetWho(); return; } photoFor = id; $photoIn.value = ''; $photoIn.click(); }
-async function shrink(f) {
+/* Resize on the phone. Display: long side 1920px, JPEG 0.86 (sharp on any phone screen, a few hundred KB).
+   Thumbnail: 360px for the past-meetings list. The original file is kept untouched in Vercel Blob. */
+async function resized(f, max, q) {
   const url = URL.createObjectURL(f), img = new Image();
   try {
     await new Promise((ok, no) => { img.onload = ok; img.onerror = no; img.src = url; });
-    const max = 1200, k = Math.min(1, max / Math.max(img.naturalWidth, img.naturalHeight));
+    const k = Math.min(1, max / Math.max(img.naturalWidth, img.naturalHeight));
     const c = document.createElement('canvas'); c.width = Math.round(img.naturalWidth * k); c.height = Math.round(img.naturalHeight * k);
-    c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
-    return c.toDataURL('image/jpeg', 0.8);
+    const g = c.getContext('2d'); g.imageSmoothingQuality = 'high'; g.drawImage(img, 0, 0, c.width, c.height);
+    return await new Promise((ok, no) => c.toBlob(b => (b ? ok(b) : no(new Error('encode'))), 'image/jpeg', q));
   } finally { URL.revokeObjectURL(url); }
+}
+const toDataUrl = b => new Promise((ok, no) => { const r = new FileReader(); r.onload = () => ok(r.result); r.onerror = no; r.readAsDataURL(b); });
+let blobClient = null;
+async function uploadToBlob(mid, f) {
+  blobClient = blobClient || await import('https://cdn.jsdelivr.net/npm/@vercel/blob@2.8.2/client/+esm');
+  const [disp, thumb] = [await resized(f, 1920, 0.86), await resized(f, 360, 0.8)];
+  const ext = (f.name.split('.').pop() || 'jpg').toLowerCase().replace(/[^a-z0-9]/g, '').slice(0, 5) || 'jpg';
+  const base = `siggu/${mid}`, opts = { access: 'public', handleUploadUrl: '/api/blob-upload' };
+  const [o, d, t] = await Promise.all([
+    blobClient.upload(`${base}/orig-photo.${ext}`, f, { ...opts, contentType: f.type || undefined, multipart: f.size > 8e6 }),
+    blobClient.upload(`${base}/disp-photo.jpg`, disp, { ...opts, contentType: 'image/jpeg' }),
+    blobClient.upload(`${base}/thumb-photo.jpg`, thumb, { ...opts, contentType: 'image/jpeg' }),
+  ]);
+  return { orig: o.url, url: d.url, thumb: t.url };
 }
 $photoIn.addEventListener('change', async () => {
   const m = byId(photoFor); if (!m) return;
@@ -993,16 +1086,21 @@ $photoIn.addEventListener('change', async () => {
   if ($photoIn.files.length > room) toast(`사진은 ${MAX_PHOTOS}장까지라 ${room}장만 올릴게요`);
   let done = 0;
   for (const f of files) {
-    let data;
-    try { data = await shrink(f); } catch (e) { toast('사진을 열 수 없어요. 다른 사진으로 해볼래요?'); continue; }
-    if (MODE === 'server') {
-      toast(files.length > 1 ? `사진을 올리는 중이에요… (${done + 1}/${files.length})` : '사진을 올리는 중이에요…');
-      if (!(await commit({ type: 'photo', mid: m.id, by: S.me, data }))) break;
-    } else {
-      const mm = byId(m.id), prev = photosOf(mm);
-      mm.photos = [...prev, { id: 'p' + Date.now() + done, url: data, by: S.me }]; delete mm.photo; delete mm.photoBy;
-      if (!save()) { mm.photos = prev; toast('저장 공간이 부족해요. 다른 사진을 지운 뒤 다시 올려주세요.'); break; }
-    }
+    const n = files.length > 1 ? ` (${done + 1}/${files.length})` : '';
+    try {
+      if (MODE === 'server') {
+        toast(`사진을 올리는 중이에요…${n}`);
+        let op;
+        if (S.features && S.features.blob) op = { type: 'photo', mid: m.id, by: S.me, ...(await uploadToBlob(m.id, f)) };
+        else op = { type: 'photo', mid: m.id, by: S.me, data: await toDataUrl(await resized(f, 1600, 0.85)) };
+        if (!(await commit(op))) break;
+      } else {
+        const data = await toDataUrl(await resized(f, 1600, 0.85));
+        const mm = byId(m.id), prev = photosOf(mm);
+        mm.photos = [...prev, { id: 'p' + Date.now() + done, url: data, by: S.me }]; delete mm.photo; delete mm.photoBy;
+        if (!save()) { mm.photos = prev; toast('저장 공간이 부족해요. 다른 사진을 지운 뒤 다시 올려주세요.'); break; }
+      }
+    } catch (e) { toast('사진을 올리지 못했어요. 다시 해볼래요?'); break; }
     done++; render();
   }
   if (done) toast(done > 1 ? `사진 ${done}장을 올렸어요` : '모임 사진을 올렸어요');
@@ -1106,6 +1204,13 @@ document.addEventListener('click', e => {
       break;
     }
     case 'close': closeSheet(); break;
+    case 'profile': sheetProfile(v); break;
+    case 'editprofile': if (!S.me) { pendingAfterPick = null; sheetWho(); } else sheetProfileEdit(); break;
+    case 'copyphone': {
+      const done = () => toast('전화번호를 복사했어요');
+      try { navigator.clipboard.writeText(v).then(done, () => toast(v)); } catch (e) { toast(v); }
+      break;
+    }
     case 'theme': {
       const next = isDark() ? 'light' : 'dark';
       try { localStorage.setItem(THEME_KEY, next); } catch (e) {}

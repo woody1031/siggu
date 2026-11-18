@@ -1,4 +1,11 @@
-import { MAX_PHOTOS, MEMBERS, configured, pairs, photoKey, photosOf, pipeline, readMeetings, readState, redis, saveMeeting, send } from './_db.js';
+import { BLOB_URL, MAX_PHOTOS, MEMBERS, configured, pairs, photoKey, photosOf, pipeline, readMeetings, readState, redis, saveMeeting, send } from './_db.js';
+
+// Remove uploaded files from Vercel Blob (best effort; the record is removed either way).
+async function dropBlobs(photos) {
+  const urls = photos.flatMap(p => [p.url, p.thumb, p.orig]).filter(u => u && BLOB_URL.test(u));
+  if (!urls.length || !process.env.BLOB_READ_WRITE_TOKEN) return;
+  try { const { del } = await import('@vercel/blob'); await del(urls); } catch (e) { /* ignore */ }
+}
 
 // POST /api/action { type, ... } -> applies one change, returns the full new state.
 const DATE = /^\d{4}-\d{2}-\d{2}$/;
@@ -15,7 +22,7 @@ async function apply(op) {
   const meetings = await readMeetings();
   const list = Object.values(meetings);
   const m = op.mid ? meetings[op.mid] : null;
-  if (op.type !== 'create' && op.type !== 'record') need(m, '모임을 찾을 수 없어요. 새로고침해 주세요.');
+  if (!['create', 'record', 'profile'].includes(op.type)) need(m, '모임을 찾을 수 없어요. 새로고침해 주세요.');
   if ('member' in op || 'by' in op) need(MEMBERS.includes(op.member ?? op.by), '누구인지 먼저 골라주세요.');
 
   switch (op.type) {
@@ -53,7 +60,15 @@ async function apply(op) {
       await pipeline([...others, saveMeeting(next), ...(trimmed.length ? [['HSET', `avail:${m.id}`, ...trimmed]] : [])]);
       return {};
     }
+    case 'profile': {
+      const birthday = String(op.birthday || ''), phone = clean(op.phone, 20), bio = clean(op.bio, 40);
+      need(!birthday || /^(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$/.test(birthday), '생일을 다시 골라주세요.');
+      need(!phone || /^[0-9+\-() ]{3,20}$/.test(phone), '전화번호는 숫자와 - 만 써주세요.');
+      await redis('HSET', 'profiles', op.member, JSON.stringify({ birthday, phone, bio, updatedAt: nowKST() }));
+      return {};
+    }
     case 'delete': {
+      await dropBlobs(photosOf(m));
       const keys = new Set([`photo:${m.id}`, ...photosOf(m).map(p => photoKey(m.id, p.id))]);
       await pipeline([['HDEL', 'meetings', m.id], ['DEL', `avail:${m.id}`], ...[...keys].map(k => ['DEL', k])]);
       return {};
@@ -103,19 +118,28 @@ async function apply(op) {
     case 'photo': {
       const photos = photosOf(m);
       need(photos.length < MAX_PHOTOS, `사진은 모임마다 ${MAX_PHOTOS}장까지 올릴 수 있어요.`);
-      const data = String(op.data || '');
-      need(/^data:image\/(jpeg|png|webp);base64,/.test(data), '사진 파일만 올릴 수 있어요.');
-      need(data.length <= MAX_PHOTO, '사진이 너무 커요. 다른 사진으로 해볼래요?');
       const pid = `p${Date.now().toString(36)}${Math.random().toString(36).slice(2, 5)}`;
       const { photo, photoBy, ...rest } = m;
-      const next = { ...rest, photos: [...photos, { id: pid, url: `/api/photo?mid=${m.id}&pid=${pid}`, by: op.by }] };
-      await pipeline([['SET', photoKey(m.id, pid), data], saveMeeting(next)]);
+      let entry, writes = [];
+      if (op.url) {
+        // Uploaded straight to Vercel Blob: display version, thumbnail and the original file.
+        need([op.url, op.thumb || op.url, op.orig || op.url].every(u => BLOB_URL.test(String(u))), '사진 주소가 올바르지 않아요.');
+        entry = { id: pid, url: op.url, thumb: op.thumb || op.url, orig: op.orig || op.url, by: op.by };
+      } else {
+        const data = String(op.data || '');
+        need(/^data:image\/(jpeg|png|webp);base64,/.test(data), '사진 파일만 올릴 수 있어요.');
+        need(data.length <= MAX_PHOTO, '사진이 너무 커요. 다른 사진으로 해볼래요?');
+        entry = { id: pid, url: `/api/photo?mid=${m.id}&pid=${pid}`, by: op.by };
+        writes = [['SET', photoKey(m.id, pid), data]];
+      }
+      await pipeline([...writes, saveMeeting({ ...rest, photos: [...photos, entry] })]);
       return { photoId: pid };
     }
     case 'photodel': {
       const photos = photosOf(m), pid = String(op.pid || (photos[0] && photos[0].id) || '');
       need(photos.some(p => p.id === pid), '사진을 찾을 수 없어요. 새로고침해 주세요.');
       const { photo, photoBy, ...rest } = m;
+      await dropBlobs(photos.filter(p => p.id === pid));
       await pipeline([['DEL', photoKey(m.id, pid)], saveMeeting({ ...rest, photos: photos.filter(p => p.id !== pid) })]);
       return {};
     }
