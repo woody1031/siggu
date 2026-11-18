@@ -153,8 +153,8 @@ h1,h2,h3{text-wrap:balance}
 @keyframes tilt{0%,100%{transform:translate(-50%,-88%) rotate(-14deg)}50%{transform:translate(-50%,-90%) rotate(-6deg)}}
 .fig .emo{position:relative;z-index:1;font-size:30px;line-height:1;margin-bottom:14%}
 .fig.sil .char img,.fig.sil .emo{filter:var(--sil-filter);opacity:var(--sil-op)}
-.members.intro .fig .char{transform-origin:50% 100%;animation:drop .62s cubic-bezier(.3,1.35,.6,1) both;animation-delay:calc(120ms + var(--i, 0) * 110ms)}
-@keyframes drop{0%{transform:translateY(-56px);opacity:0}35%{opacity:1}70%{transform:translateY(3px) scaleY(.94)}100%{transform:none}}
+.members.intro .fig .char{animation:drop .34s cubic-bezier(.25,.8,.35,1) both;animation-delay:calc(60ms + var(--i, 0) * 70ms)}
+@keyframes drop{0%{transform:translateY(-14px);opacity:0}55%{opacity:1}75%{transform:translateY(1.5px)}100%{transform:none}}
 .mem .nm{font-weight:600;line-height:1.2;font-size:13px}
 .mem.pending .nm{color:var(--muted);font-weight:500}
 .mem .st{font-size:11px;color:var(--muted)}
@@ -606,7 +606,7 @@ async function refresh() {
 }
 
 let S = { me: null, meetings: [] };
-let introDone = false; /* characters drop in once per visit */
+let introDone = false; /* characters drop in each time the home screen opens (not on in-place refreshes) */
 let view = 'home', viewMid = null, editMid = null, draft = null, pendingAfterPick = null, drag = null;
 const $app = document.getElementById('app'), $scrim = document.getElementById('scrim'), $sheet = document.getElementById('sheet'), $toast = document.getElementById('toast');
 
@@ -866,7 +866,7 @@ function render(scrollTop) {
   }
   if (scrollTop) window.scrollTo(0, 0);
 }
-const go = v => { view = v; render(true); };
+const go = v => { if (v === 'home' && view !== 'home') introDone = false; view = v; render(true); };
 
 function toast(t) { $toast.textContent = t; $toast.classList.add('show'); clearTimeout(toast.t); toast.t = setTimeout(() => $toast.classList.remove('show'), 1900); }
 let sheetTimer = null;
