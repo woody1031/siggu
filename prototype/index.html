@@ -53,7 +53,7 @@
   --warn-bg:#FFF7DE; --warn-ink:#9B7821; --warn-line:#FBDC65;             /* warning weak */
   --c-pigeon:#6A7FAD; --c-babsae:#A6744A; --c-koala:#7C8592; --c-fox:#DD6C25; --c-dog:#BE9550; --on-member:#FFFFFF;
   --scrim:rgba(0,0,0,.45);                                                /* bg-overlay */
-  --stage:#F7F8F9; --ped-top:#FFFFFF; --ped-side:#DCDEE3; --sil-filter:brightness(0); --sil-op:.09;
+  --stage:#F7F8F9; --ped-top:#FFFFFF; --ped-side:#DCDEE3; --ped-shadow:rgba(26,28,32,.16); --sil-filter:brightness(0); --sil-op:.09;
   --shadow-xs:none; --shadow-sm:none;
   --shadow-s1:0 1px 4px rgba(0,0,0,.08); --shadow-s2:0 2px 10px rgba(0,0,0,.1); --shadow-lg:0 4px 16px rgba(0,0,0,.12); /* shadow-s1..s3 */
   --radius:12px; --radius-sm:4px; --radius-md:8px; --radius-xl:16px; --radius-sheet:24px;
@@ -73,7 +73,7 @@
   --holiday:#FF6E60; --sat:#41A2F9; --warn-bg:#302819; --warn-ink:#CA901C; --warn-line:#543E15;
   --c-pigeon:#93A6D3; --c-babsae:#D2A178; --c-koala:#A9B1BE; --c-fox:#FF9A5A; --c-dog:#E2BF80; --on-member:#11151B;
   --scrim:rgba(0,0,0,.6);
-  --stage:#1D2025; --ped-top:#2B2E35; --ped-side:#16171B; --sil-filter:brightness(0) invert(1); --sil-op:.13;
+  --stage:#1D2025; --ped-top:#393D46; --ped-side:#2B2E35; --ped-shadow:rgba(0,0,0,.55); --sil-filter:brightness(0) invert(1); --sil-op:.13;
   --shadow-s1:0 1px 4px rgba(0,0,0,.5); --shadow-s2:0 2px 10px rgba(0,0,0,.68); --shadow-lg:0 4px 16px rgba(0,0,0,.8);
   color-scheme:dark}}
 :root[data-theme="dark"]{
@@ -88,7 +88,7 @@
   --holiday:#FF6E60; --sat:#41A2F9; --warn-bg:#302819; --warn-ink:#CA901C; --warn-line:#543E15;
   --c-pigeon:#93A6D3; --c-babsae:#D2A178; --c-koala:#A9B1BE; --c-fox:#FF9A5A; --c-dog:#E2BF80; --on-member:#11151B;
   --scrim:rgba(0,0,0,.6);
-  --stage:#1D2025; --ped-top:#2B2E35; --ped-side:#16171B; --sil-filter:brightness(0) invert(1); --sil-op:.13;
+  --stage:#1D2025; --ped-top:#393D46; --ped-side:#2B2E35; --ped-shadow:rgba(0,0,0,.55); --sil-filter:brightness(0) invert(1); --sil-op:.13;
   --shadow-s1:0 1px 4px rgba(0,0,0,.5); --shadow-s2:0 2px 10px rgba(0,0,0,.68); --shadow-lg:0 4px 16px rgba(0,0,0,.8);
   color-scheme:dark}
 
@@ -142,8 +142,15 @@ h1,h2,h3{text-wrap:balance}
 .members{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:6px;margin:18px 0 16px;padding:20px 10px 16px;border-radius:var(--radius);background:var(--stage)}
 .mem{display:flex;flex-direction:column;align-items:center;gap:2px;font-size:12px;text-align:center;min-width:0}
 .fig{position:relative;width:100%;aspect-ratio:1/1;display:flex;align-items:flex-end;justify-content:center;margin-bottom:6px}
-.fig::after{content:"";position:absolute;left:8%;right:8%;bottom:0;height:22%;border-radius:50%;background:linear-gradient(var(--ped-top),var(--ped-top)) top/100% 70% no-repeat,var(--ped-side);box-shadow:0 1px 2px rgba(0,0,0,.06)}
-.char{position:relative;z-index:1;display:block;width:calc(84% * var(--s, 1));margin-bottom:9%}
+.fig{--ped-w:84%;--ped-top-h:15%;--ped-depth:5%;--ped-bottom:5%}
+/* pedestal: a short cylinder. ::after = body (side band + floor shadow), ::before = top face */
+.fig::after{content:"";position:absolute;left:calc((100% - var(--ped-w)) / 2);width:var(--ped-w);bottom:var(--ped-bottom);height:calc(var(--ped-top-h) + var(--ped-depth));
+  border-radius:50% / 37.5%; /* = top-h / (top-h + depth) * 50% */
+  background:linear-gradient(90deg,color-mix(in srgb,var(--ped-side) 88%,#000) 0%,var(--ped-side) 18%,var(--ped-side) 82%,color-mix(in srgb,var(--ped-side) 88%,#000) 100%);
+  box-shadow:0 8px 14px -6px var(--ped-shadow)}
+.fig::before{content:"";position:absolute;z-index:1;left:calc((100% - var(--ped-w)) / 2);width:var(--ped-w);bottom:calc(var(--ped-bottom) + var(--ped-depth));height:var(--ped-top-h);border-radius:50%;
+  background:var(--ped-top);box-shadow:inset 0 -1px 0 color-mix(in srgb,var(--ped-side) 60%,transparent)}
+.char{position:relative;z-index:2;display:block;width:calc(84% * var(--s, 1));margin-bottom:calc(var(--ped-bottom) + var(--ped-depth) + var(--ped-top-h) * .45)}
 .char img{display:block;width:100%;height:auto;transition:filter .35s,opacity .35s,transform .35s}
 .hat-wrap{position:absolute;left:var(--hx);top:var(--hy);width:36%;z-index:2;transform:translate(-50%,-88%) rotate(-14deg);transform-origin:50% 100%;pointer-events:none}
 .hat-wrap.near{opacity:.3}
