@@ -948,7 +948,7 @@ const fmtBirthday = b => b ? `${Number(b.slice(0, 2))}월 ${Number(b.slice(3, 5)
 function sheetProfile(id) {
   const x = M[id], p = profileOf(id), mine = id === S.me, unset = '<span class="unset">아직 안 적었어요</span>';
   const bd = p.birthday ? fmtBirthday(p.birthday) : `${x.bday}월 <span class="unset">· 날짜는 아직</span>`;
-  openSheet(`<div class="prof">${figure(x, true, x.name)}<h2>${x.name}${mine ? ' <span class="me-tag">나</span>' : ''}</h2><p class="sub">${x.animal}</p></div>
+  openSheet(`<div class="prof">${figure(x, true, x.name)}<h2>${x.name}${mine ? ' <span class="me-tag">나</span>' : ''}</h2></div>
     <dl class="prof-list">
       <div><dt>생일</dt><dd>${bd}${bdayLevel(x) === 'on' ? ' 🎂' : ''}</dd></div>
       <div><dt>한 줄 소개</dt><dd>${p.bio ? esc(p.bio) : unset}</dd></div>
