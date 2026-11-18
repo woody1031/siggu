@@ -18,6 +18,7 @@ function run([cmd, ...a]) {
   switch (cmd.toUpperCase()) {
     case 'HGETALL': { const h = store.get(a[0]); return h ? [...h].flat() : []; }
     case 'HSET': { const h = hash(a[0]); for (let i = 1; i < a.length; i += 2) h.set(a[i], a[i + 1]); return 1; }
+    case 'HGET': { const h = store.get(a[0]); return h && h.has(a[1]) ? h.get(a[1]) : null; }
     case 'HDEL': { const h = store.get(a[0]); let n = 0; for (const f of a.slice(1)) if (h && h.delete(f)) n++; return n; }
     case 'GET': { const v = store.get(a[0]); return typeof v === 'string' ? v : null; }
     case 'SET': store.set(a[0], a[1]); return 'OK';

@@ -261,6 +261,23 @@ h1,h2,h3{text-wrap:balance}
 .gallery.one .photo{flex-basis:100%}
 .gallery .photo img{aspect-ratio:4/5;max-height:none;height:auto}
 .gallery.one .photo img{aspect-ratio:auto;max-height:440px}
+.review-card{background:var(--surface);border-radius:var(--radius-xl);padding:2px 16px 14px}
+.reviews{list-style:none;margin:0;padding:0}
+.rv{display:grid;grid-template-columns:28px minmax(0,1fr);gap:10px;padding:14px 0;border-bottom:1px solid var(--line)}
+.rv .av{margin-top:1px}
+.rv-h{display:flex;align-items:center;gap:6px;font-size:14px;min-width:0}
+.rv-h b{font-weight:700}
+.rv-t{font-size:12px;color:var(--subtle);font-variant-numeric:tabular-nums}
+.rv-del{margin-left:auto;padding:2px 4px;font-size:12px}
+.rv-x{margin:4px 0 0;font-size:15px;line-height:1.5;white-space:pre-wrap;overflow-wrap:anywhere}
+.rv-empty{margin:0;padding:18px 0;color:var(--subtle);font-size:14px;text-align:center;border-bottom:1px solid var(--line)}
+.rv-form{display:flex;align-items:flex-end;gap:8px;padding-top:14px}
+.rv-form .av{margin-bottom:9px}
+.rv-form textarea{flex:1;min-width:0;height:44px;resize:none;border:0;box-shadow:inset 0 0 0 1px var(--line-strong);border-radius:var(--radius);padding:11px 14px;font:inherit;font-size:16px;line-height:1.4;max-height:140px;background:var(--surface);color:var(--ink)}
+.rv-form textarea::placeholder{color:var(--subtle)}
+.rv-form textarea:focus{outline:none;box-shadow:inset 0 0 0 2px var(--ink)}
+.rv-send{height:44px;padding:0 16px;font-size:15px;flex:none}
+.cnt-sm{color:var(--primary);font-weight:700;margin-left:2px}
 .photo-add{width:100%;margin-top:10px;gap:6px}
 .photo-add svg{width:18px;height:18px}
 .photo-add .pc{color:var(--subtle);font-weight:500}
@@ -685,6 +702,7 @@ async function boot() {
 /* Pick up what the others changed, but never under someone's fingers. */
 async function refresh() {
   if (MODE !== 'server' || view === 'input' || view === 'new' || !$scrim.hidden) return;
+  const typing = document.getElementById('rv-in'); if (typing && (typing.value || document.activeElement === typing)) return;
   try {
     const r = await fetch('/api/state', { cache: 'no-store' }); if (!r.ok) return;
     const j = await r.json(), next = JSON.stringify([j.meetings || [], j.profiles || {}]);
@@ -849,6 +867,7 @@ function vResult() {
   return `${topbar(esc(m.title), `${label(m)} · 후보 ${md(m.start)} ~ ${md(m.end)}`)}
   ${m.confirmed ? planBlock(m, true) : ''}
   ${m.confirmed ? `<h2 class="section-t">모임 사진</h2>${photoBlock(m)}` : ''}
+  ${m.confirmed ? `<h2 class="section-t">모임 후기${(m.comments || []).length ? ` <span class="cnt-sm">${m.comments.length}</span>` : ''}</h2>${reviewBlock(m)}` : ''}
   ${ent.length ? `<p class="status" style="margin-top:12px">${ent.length}/${MEMBERS.length}명 입력${pend.length ? ` · ${pend.join(', ')} 아직이에요` : ' · 모두 입력했어요'}</p>` : ''}
   ${!ent.length ? `<div class="empty" style="margin-top:12px"><span class="big" aria-hidden="true">${m.confirmed ? '📌' : '🗓️'}</span>${m.confirmed ? '이 모임은 확정 기록만 남아 있어요.' : '아직 아무도 날짜를 찍지 않았어요.<br>첫 번째로 찍어볼까요?'}</div>` : `
   <h2 class="section-t" style="margin-top:16px">추천 날짜</h2>
@@ -1131,6 +1150,34 @@ $photoIn.addEventListener('change', async () => {
   }
   if (done) toast(done > 1 ? `사진 ${done}장을 올렸어요` : '모임 사진을 올렸어요');
 });
+/* ---------- meeting reviews ---------- */
+function reviewBlock(m) {
+  const cs = m.comments || [];
+  const list = cs.length
+    ? `<ul class="reviews">${cs.map(c => `<li class="rv">${av(c.by, 'sm')}<div class="rv-b"><div class="rv-h"><b>${M[c.by] ? M[c.by].name : ''}</b><span class="rv-t">${stamp(c.at)}</span>${c.by === S.me ? `<button class="linkbtn rv-del" data-act="cmtdel" data-v="${m.id}" data-p="${c.id}">삭제</button>` : ''}</div><p class="rv-x">${esc(c.text)}</p></div></li>`).join('')}</ul>`
+    : `<p class="rv-empty">아직 후기가 없어요. 첫 후기를 남겨보세요.</p>`;
+  return `<div class="review-card">${list}
+    <form class="rv-form" data-mid="${m.id}" novalidate>${S.me ? av(S.me, 'sm') : ''}<textarea id="rv-in" rows="1" maxlength="300" aria-label="모임 후기" placeholder="${S.me ? '오늘 모임 어땠어요?' : '누구인지 고르고 후기를 남겨요'}"></textarea><button class="btn pri rv-send" type="submit">등록</button></form></div>`;
+}
+document.addEventListener('submit', async e => {
+  const f = e.target.closest && e.target.closest('.rv-form'); if (!f) return;
+  e.preventDefault();
+  if (!S.me) { pendingAfterPick = null; sheetWho(); return; }
+  const ta = f.querySelector('textarea'), text = ta.value.trim(), mid = f.dataset.mid;
+  if (!text) { ta.focus(); return; }
+  const n = new Date(), at = `${toKey(n)}T${pad(n.getHours())}:${pad(n.getMinutes())}`;
+  const ok = await commit({ type: 'comment', mid, by: S.me, text }, () => {
+    const m = byId(mid); (m.comments || (m.comments = [])).push({ id: 'c' + Date.now(), by: S.me, text, at });
+  });
+  if (ok) { render(); toast('후기를 남겼어요'); }
+});
+document.addEventListener('input', e => {
+  if (e.target.id === 'rv-in') { e.target.style.height = 'auto'; e.target.style.height = Math.min(e.target.scrollHeight, 140) + 'px'; }
+});
+function sheetCmtDel(mid, cid) {
+  openSheet(`<h2>이 후기를 지울까요?</h2><p class="sub">지운 후기는 되돌릴 수 없어요.</p>
+    <div class="row-btns"><button class="btn plain" data-act="close">취소</button><button class="btn del-solid" data-act="docmtdel" data-v="${mid}" data-p="${cid}">지우기</button></div>`);
+}
 function sheetPhotoDel(id, pid) {
   openSheet(`<h2>이 사진을 지울까요?</h2><p class="sub">지운 사진은 되돌릴 수 없어요.</p>
     <div class="row-btns"><button class="btn plain" data-act="close">취소</button><button class="btn del-solid" data-act="dophotodel" data-v="${id}" data-p="${pid}">지우기</button></div>`);
@@ -1230,6 +1277,13 @@ document.addEventListener('click', e => {
       break;
     }
     case 'close': closeSheet(); break;
+    case 'cmtdel': sheetCmtDel(v, t.dataset.p); break;
+    case 'docmtdel': {
+      const cid = t.dataset.p;
+      commit({ type: 'commentdel', mid: v, cid, by: S.me }, () => { const m = byId(v); m.comments = (m.comments || []).filter(c => c.id !== cid); })
+        .then(ok => { if (ok) { closeSheet(); render(); toast('후기를 지웠어요'); } });
+      break;
+    }
     case 'profile': sheetProfile(v); break;
     case 'editprofile': if (!S.me) { pendingAfterPick = null; sheetWho(); } else sheetProfileEdit(); break;
     case 'theme': {

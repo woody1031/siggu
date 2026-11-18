@@ -6,6 +6,7 @@
 //   photo:<meetingId>:<photoId> string  JPEG data URL (up to 10 photos per meeting)
 //   photo:<meetingId>     string        older single photo, shown as photo id 'legacy'
 //   profiles          hash  memberId  -> { birthday 'MM-DD', bio, updatedAt } (no phone numbers)
+//   comments:<meetingId> hash commentId -> { id, by, text, at } (meeting reviews; one field each so writes never collide)
 // Photos uploaded through Vercel Blob keep only their URLs here: url (display), thumb, orig (original file).
 
 const REDIS_URL = process.env.KV_REST_API_URL || process.env.UPSTASH_REDIS_REST_URL;
@@ -48,12 +49,13 @@ export async function readState() {
   const profiles = Object.fromEntries(Object.entries(pairs(await redis('HGETALL', 'profiles'))).map(([k, v]) => { const { phone, ...p } = JSON.parse(v); return [k, p]; }));
   const features = { blob: blobEnabled(), maxPhotos: MAX_PHOTOS };
   if (!meetings.length) return { meetings: [], profiles, features };
-  const avails = await pipeline(meetings.map(m => ['HGETALL', `avail:${m.id}`]));
+  const avails = await pipeline(meetings.flatMap(m => [['HGETALL', `avail:${m.id}`], ['HGETALL', `comments:${m.id}`]]));
   meetings.forEach((m, i) => {
     m.photos = photosOf(m);
     // Pages opened before multi-photo read a single photo/photoBy; keep sending the first one for them.
     m.photo = m.photos[0] ? m.photos[0].url : null; m.photoBy = m.photos[0] ? m.photos[0].by : null;
-    const a = pairs(avails[i]);
+    m.comments = Object.values(pairs(avails[i * 2 + 1])).map(c => JSON.parse(c)).sort((a, b) => (a.at < b.at ? -1 : a.at > b.at ? 1 : 0));
+    const a = pairs(avails[i * 2]);
     m.avail = Object.fromEntries(Object.entries(a).map(([member, json]) => [member, JSON.parse(json)]));
   });
   meetings.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0) || b.year - a.year || b.round - a.round);

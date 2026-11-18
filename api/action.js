@@ -69,7 +69,7 @@ async function apply(op) {
     case 'delete': {
       await dropBlobs(photosOf(m));
       const keys = new Set([`photo:${m.id}`, ...photosOf(m).map(p => photoKey(m.id, p.id))]);
-      await pipeline([['HDEL', 'meetings', m.id], ['DEL', `avail:${m.id}`], ...[...keys].map(k => ['DEL', k])]);
+      await pipeline([['HDEL', 'meetings', m.id], ['DEL', `avail:${m.id}`], ['DEL', `comments:${m.id}`], ...[...keys].map(k => ['DEL', k])]);
       return {};
     }
     case 'record': {
@@ -112,6 +112,21 @@ async function apply(op) {
       need(!time || TIME.test(time), '시간을 다시 골라주세요.');
       const log = [...(m.log || []), { by: op.by, at: nowKST(), text: clean(op.text, 80) }].slice(-30);
       await pipeline([saveMeeting({ ...m, time, place, log })]);
+      return {};
+    }
+    case 'comment': {
+      need(op.by, '누구인지 먼저 골라주세요.');
+      const text = clean(op.text, 300);
+      need(text, '후기를 적어주세요.');
+      const id = `c${Date.now().toString(36)}${Math.random().toString(36).slice(2, 5)}`;
+      await redis('HSET', `comments:${m.id}`, id, JSON.stringify({ id, by: op.by, text, at: nowKST() }));
+      return { commentId: id };
+    }
+    case 'commentdel': {
+      const raw = await redis('HGET', `comments:${m.id}`, String(op.cid || ''));
+      need(raw, '후기를 찾을 수 없어요. 새로고침해 주세요.');
+      need(JSON.parse(raw).by === op.by, '내가 쓴 후기만 지울 수 있어요.');
+      await redis('HDEL', `comments:${m.id}`, String(op.cid));
       return {};
     }
     case 'photo': {
