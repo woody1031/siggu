@@ -153,8 +153,8 @@ h1,h2,h3{text-wrap:balance}
 @keyframes tilt{0%,100%{transform:translate(-50%,-88%) rotate(-14deg)}50%{transform:translate(-50%,-90%) rotate(-6deg)}}
 .fig .emo{position:relative;z-index:1;font-size:30px;line-height:1;margin-bottom:14%}
 .fig.sil .char img,.fig.sil .emo{filter:var(--sil-filter);opacity:var(--sil-op)}
-.mem:not(.pending) .fig .char{animation:hop .5s ease-out both}
-@keyframes hop{0%{transform:translateY(6px) scale(.94)}60%{transform:translateY(-3px)}100%{transform:none}}
+.members.intro .fig .char{transform-origin:50% 100%;animation:drop .62s cubic-bezier(.3,1.35,.6,1) both;animation-delay:calc(120ms + var(--i, 0) * 110ms)}
+@keyframes drop{0%{transform:translateY(-56px);opacity:0}35%{opacity:1}70%{transform:translateY(3px) scaleY(.94)}100%{transform:none}}
 .mem .nm{font-weight:600;line-height:1.2;font-size:13px}
 .mem.pending .nm{color:var(--muted);font-weight:500}
 .mem .st{font-size:11px;color:var(--muted)}
@@ -606,6 +606,7 @@ async function refresh() {
 }
 
 let S = { me: null, meetings: [] };
+let introDone = false; /* characters drop in once per visit */
 let view = 'home', viewMid = null, editMid = null, draft = null, pendingAfterPick = null, drag = null;
 const $app = document.getElementById('app'), $scrim = document.getElementById('scrim'), $sheet = document.getElementById('sheet'), $toast = document.getElementById('toast');
 
@@ -697,7 +698,7 @@ function vEmpty() {
     <div class="eyebrow">${new Date().getFullYear()}년 · 첫 모임 전</div>
     <h2 class="h2">아직 모임이 없어요</h2>
     <p class="range" style="font-size:14px">모임을 만들고 후보 기간을 정하면, 식구들이 각자 되는 날을 찍을 수 있어요.</p>
-    <div class="members">${MEMBERS.map(x => `<div class="mem pending ${x.id === S.me ? 'me' : ''}">${figure(x, false, x.name)}<span class="nm">${x.name}</span><span class="st">기다리는 중</span></div>`).join('')}</div>
+    <div class="members ${introDone ? '' : 'intro'}">${MEMBERS.map((x, i) => `<div class="mem pending ${x.id === S.me ? 'me' : ''}" style="--i:${i}">${figure(x, false, x.name)}<span class="nm">${x.name}</span><span class="st">기다리는 중</span></div>`).join('')}</div>
     <ol class="steps">
       <li><b>모임 만들기</b><span>이름과 후보 기간만 정하면 돼요</span></li>
       <li><b>되는 날 찍기</b><span>식구마다 캘린더에서 쉬는 날을 눌러요</span></li>
@@ -725,7 +726,7 @@ function vHome() {
     <h2 class="h2">${esc(m.title)}</h2>
     <p class="range">후보 ${fmt(m.start)} ~ ${fmt(m.end)}</p>
     ${m.confirmed ? planBlock(m) : ''}
-    <div class="members">${MEMBERS.map(x => { const ok = ent.includes(x.id); return `<div class="mem ${x.id === meIn ? 'me' : ''} ${ok ? '' : 'pending'}">${figure(x, ok, x.name + (ok ? '' : ' (아직)'))}<span class="nm">${x.name}</span><span class="st ${ok ? 'ok' : ''}">${ok ? '완료' : '아직'}</span></div>`; }).join('')}</div>
+    <div class="members ${introDone ? '' : 'intro'}">${MEMBERS.map((x, i) => { const ok = ent.includes(x.id); return `<div class="mem ${x.id === meIn ? 'me' : ''} ${ok ? '' : 'pending'}" style="--i:${i}">${figure(x, ok, x.name + (ok ? '' : ' (아직)'))}<span class="nm">${x.name}</span><span class="st ${ok ? 'ok' : ''}">${ok ? '완료' : '아직'}</span></div>`; }).join('')}</div>
     ${!m.confirmed && top ? `<div class="best"><span class="k">지금 가장 좋은 날</span><b>${fmt(top.d)}</b><span style="margin-left:auto;color:var(--accent);font-weight:700">${top.who.length}명</span></div>` : ''}
     <div class="btns">
       <button class="btn ${m.confirmed ? 'sec' : 'pri'}" data-act="enter">${meIn && ent.includes(meIn) ? '내 날짜 수정' : '내 날짜 입력'}</button>
@@ -848,6 +849,7 @@ function updPrev() {
 
 /* ---------- render ---------- */
 function render(scrollTop) {
+  queueMicrotask(() => { if (view === 'home' && MODE !== 'loading' && MODE !== 'error') introDone = true; });
   $app.classList.toggle('has-bar', view === 'input');
   if (MODE === 'loading' || MODE === 'error') {
     $app.innerHTML = `${brand()}<div class="empty" style="margin-top:12px">${MODE === 'loading' ? '식구들 일정을 불러오는 중이에요…' : `${esc(bootError || '데이터를 불러오지 못했어요.')}<div class="btns"><button class="btn plain" data-act="retry">다시 불러오기</button></div>`}</div>`;
