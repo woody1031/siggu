@@ -807,7 +807,7 @@ function stage(m) {
   return m.status === 'archived' ? 'ended' : 'voting';
 }
 const STAGE_LABEL = { voting: '날짜 고르는 중', confirmed: '날짜 확정', over: '모임 완료', ended: '확정 없이 끝남' };
-const stagePill = m => { const st = stage(m); return `<span class="pill st-${st}">${STAGE_LABEL[st]}</span>`; };
+const stagePill = m => { const st = stage(m); return st === 'confirmed' ? '' : `<span class="pill st-${st}">${STAGE_LABEL[st]}</span>`; }; /* 날짜 확정은 라벨 없이 (카드 배경이 대신 알려줘요) */
 function fmtTime(t) {
   if (!t) return '';
   const [h, mi] = t.split(':').map(Number);
