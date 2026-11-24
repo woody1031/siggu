@@ -453,7 +453,7 @@ body{letter-spacing:-.01em}
 .edit-chip{height:28px;font-size:12px}
 .dday{display:inline-flex;align-items:center;height:24px;padding:0 8px;border-radius:var(--radius-sm);background:var(--primary);color:var(--primary-fg);font-size:13px;font-weight:700;letter-spacing:.01em;font-variant-numeric:tabular-nums;white-space:nowrap}
 .dday.today{animation:none;background:var(--destructive)}
-.dday-line{display:flex;align-items:center;gap:8px;margin:2px 0 0;font-size:13px;color:var(--subtle)}
+.plan-h .d{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
 
 .mem[role="button"]{cursor:pointer;border-radius:var(--radius-md);-webkit-tap-highlight-color:transparent}
 .mem[role="button"]:active .fig .char{transform:scale(.94);transition:transform .1s}
@@ -775,7 +775,7 @@ const stamp = s => { const d = new Date(s); return `${d.getMonth() + 1}/${d.getD
 function planBlock(m, withYear) {
   const has = m.time || m.place, last = (m.log || [])[(m.log || []).length - 1];
   return `<section class="plan" aria-label="확정된 모임 정보">
-    <div class="plan-h"><span class="pin" aria-hidden="true">📌</span><div><div class="t">모이는 날</div><div class="d">${withYear ? fmtY(m.confirmed) : fmt(m.confirmed)}</div></div></div>
+    <div class="plan-h"><span class="pin" aria-hidden="true">📌</span><div><div class="t">모이는 날</div><div class="d">${withYear ? fmtY(m.confirmed) : fmt(m.confirmed)}${dday(m.confirmed) ? `<span class="dday ${dday(m.confirmed) === 'D-DAY' ? 'today' : ''}">${dday(m.confirmed)}</span>` : ''}</div></div></div>
     <div class="plan-b">
       <div class="pl-row"><span class="pl-k">시간</span><span class="pl-v ${m.time ? '' : 'unset'}">${m.time ? fmtTime(m.time) : '아직 안 정했어요'}</span></div>
       <div class="pl-row"><span class="pl-k">장소</span><span class="pl-v ${m.place ? '' : 'unset'}">${m.place ? esc(m.place) : '아직 안 정했어요'}</span></div>
@@ -843,7 +843,7 @@ function vHome() {
   <article class="card">
     <div class="eyebrow">${label(m)} ${stagePill(m)}<button class="chipbtn edit-chip" data-act="edit" data-v="${m.id}">수정</button></div>
     <h2 class="h2">${esc(m.title)}</h2>
-    ${m.confirmed ? (dday(m.confirmed) ? `<p class="dday-line"><span class="dday ${dday(m.confirmed) === 'D-DAY' ? 'today' : ''}">${dday(m.confirmed)}</span>${dday(m.confirmed) === 'D-DAY' ? '오늘 만나요!' : '모이는 날까지'}</p>` : '') : `<p class="range">후보 ${fmt(m.start)} ~ ${fmt(m.end)}</p>`}
+    ${m.confirmed ? '' : `<p class="range">후보 ${fmt(m.start)} ~ ${fmt(m.end)}</p>`}
     ${m.confirmed ? planBlock(m) : ''}
     ${membersOpen()}${MEMBERS.map((x, i) => { const ok = ent.includes(x.id); return `<div class="mem ${x.id === meIn ? 'me' : ''} ${ok ? '' : 'pending'} ${cheers(i) ? 'cheer' : ''}" style="--i:${i}" role="button" tabindex="0" data-act="profile" data-v="${x.id}" aria-label="${x.name} 프로필">${figure(x, ok, x.name + (ok ? '' : ' (아직)'))}<span class="nm">${x.name}</span><span class="st ${ok ? 'ok' : ''}">${ok ? '완료' : '아직'}</span></div>`; }).join('')}</div>
     ${!m.confirmed && top ? `<div class="best"><span class="k">지금 가장 좋은 날</span><b>${fmt(top.d)}</b><span style="margin-left:auto;color:var(--accent);font-weight:700">${top.who.length}명</span></div>` : ''}
