@@ -451,6 +451,10 @@ body{letter-spacing:-.01em}
 .chipbtn:hover,.chipbtn:active{background:var(--pressed)}
 .me-chip{height:36px;border:0;border-radius:9999px;background:var(--surface);box-shadow:inset 0 0 0 1px var(--line-muted);font-weight:500}
 .edit-chip{height:28px;font-size:12px}
+.dday{display:inline-flex;align-items:center;height:24px;padding:0 8px;border-radius:var(--radius-sm);background:var(--primary);color:var(--primary-fg);font-size:13px;font-weight:700;letter-spacing:.01em;font-variant-numeric:tabular-nums;white-space:nowrap}
+.dday.today{animation:none;background:var(--destructive)}
+.dday-line{display:flex;align-items:center;gap:8px;margin:2px 0 0;font-size:13px;color:var(--subtle)}
+
 .mem[role="button"]{cursor:pointer;border-radius:var(--radius-md);-webkit-tap-highlight-color:transparent}
 .mem[role="button"]:active .fig .char{transform:scale(.94);transition:transform .1s}
 .mem[role="button"]:focus-visible{outline:2px solid var(--ring);outline-offset:2px}
@@ -748,6 +752,12 @@ const wdClass = k => (wday(k) === 0 || hol(k)) ? 'red' : wday(k) === 6 ? 'blue' 
 const backIcon = '<svg viewBox="0 0 24 24" fill="none" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg>';
 const topbar = (t, s = '', act = 'home') => `<header class="topbar"><button class="back" data-act="${act}" aria-label="뒤로">${backIcon}</button><div class="tb"><h1 class="tb-t">${t}</h1>${s ? `<p class="tb-s">${s}</p>` : ''}</div></header>`;
 const label = m => `${m.year}년 ${m.round}회차`;
+/* D-day to a confirmed date: 'D-12', 'D-DAY', or '' once it has passed */
+function dday(k) {
+  const t = new Date(), today = new Date(t.getFullYear(), t.getMonth(), t.getDate());
+  const n = Math.round((parse(k) - today) / 86400000);
+  return n > 0 ? `D-${n}` : n === 0 ? 'D-DAY' : '';
+}
 /* 모임 단계: 날짜 고르는 중 → 날짜 확정 → (확정한 날이 지나면) 모임 완료 */
 function stage(m) {
   if (m.confirmed) return m.confirmed < toKey(new Date()) ? 'over' : 'confirmed';
@@ -833,7 +843,7 @@ function vHome() {
   <article class="card">
     <div class="eyebrow">${label(m)} ${stagePill(m)}<button class="chipbtn edit-chip" data-act="edit" data-v="${m.id}">수정</button></div>
     <h2 class="h2">${esc(m.title)}</h2>
-    <p class="range">후보 ${fmt(m.start)} ~ ${fmt(m.end)}</p>
+    ${m.confirmed ? (dday(m.confirmed) ? `<p class="dday-line"><span class="dday ${dday(m.confirmed) === 'D-DAY' ? 'today' : ''}">${dday(m.confirmed)}</span>${dday(m.confirmed) === 'D-DAY' ? '오늘 만나요!' : '모이는 날까지'}</p>` : '') : `<p class="range">후보 ${fmt(m.start)} ~ ${fmt(m.end)}</p>`}
     ${m.confirmed ? planBlock(m) : ''}
     ${membersOpen()}${MEMBERS.map((x, i) => { const ok = ent.includes(x.id); return `<div class="mem ${x.id === meIn ? 'me' : ''} ${ok ? '' : 'pending'} ${cheers(i) ? 'cheer' : ''}" style="--i:${i}" role="button" tabindex="0" data-act="profile" data-v="${x.id}" aria-label="${x.name} 프로필">${figure(x, ok, x.name + (ok ? '' : ' (아직)'))}<span class="nm">${x.name}</span><span class="st ${ok ? 'ok' : ''}">${ok ? '완료' : '아직'}</span></div>`; }).join('')}</div>
     ${!m.confirmed && top ? `<div class="best"><span class="k">지금 가장 좋은 날</span><b>${fmt(top.d)}</b><span style="margin-left:auto;color:var(--accent);font-weight:700">${top.who.length}명</span></div>` : ''}
@@ -868,7 +878,7 @@ function vResult() {
   const pend = MEMBERS.filter(x => !ent.includes(x.id)).map(x => x.name);
   const top3 = rk.slice(0, 3);
   const levels = [0, 1, 2, 3, 4, 5].map(i => `<i style="background:var(--heat${i})"></i>`).join('');
-  return `${topbar(esc(m.title), `${label(m)} · 후보 ${md(m.start)} ~ ${md(m.end)}`)}
+  return `${topbar(esc(m.title), m.confirmed ? `${label(m)}${dday(m.confirmed) ? ` · ${dday(m.confirmed)}` : ''}` : `${label(m)} · 후보 ${md(m.start)} ~ ${md(m.end)}`)}
   ${m.confirmed ? planBlock(m, true) : ''}
   ${m.confirmed ? `<h2 class="section-t">모임 사진</h2>${photoBlock(m)}` : ''}
   ${m.confirmed ? `<h2 class="section-t">모임 후기${(m.comments || []).length ? ` <span class="cnt-sm">${m.comments.length}</span>` : ''}</h2>${reviewBlock(m)}` : ''}
