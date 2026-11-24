@@ -214,7 +214,7 @@ h1,h2,h3{text-wrap:balance}
 .card.season{position:relative;overflow:hidden;background:linear-gradient(180deg,var(--sea) 0,var(--surface) 210px)}
 .card.season > :not(.fall){position:relative}
 .s-winter{--sea:var(--sea-winter)} .s-spring{--sea:var(--sea-spring)} .s-summer{--sea:var(--sea-summer)} .s-autumn{--sea:var(--sea-autumn)}
-.card.season .plan{border-color:var(--plan-line)}
+.card.season .plan{border:2px solid var(--primary)}
 .fall{position:absolute;inset:0 0 auto 0;height:210px;pointer-events:none;overflow:hidden}
 .fall i{position:absolute;top:-14px;left:var(--x);width:var(--s);height:var(--s);opacity:0;animation:fall var(--d) linear var(--w) infinite}
 .fall .flake{border-radius:50%;background:#fff;box-shadow:0 0 3px rgba(120,160,210,.35)}
@@ -887,7 +887,7 @@ function vHome() {
     ${membersOpen()}${MEMBERS.map((x, i) => { const ok = ent.includes(x.id); return `<div class="mem ${x.id === meIn ? 'me' : ''} ${ok ? '' : 'pending'} ${cheers(i) ? 'cheer' : ''}" style="--i:${i}" role="button" tabindex="0" data-act="profile" data-v="${x.id}" aria-label="${x.name} 프로필">${figure(x, ok, x.name + (ok ? '' : ' (아직)'))}<span class="nm">${x.name}</span><span class="st ${ok ? 'ok' : ''}">${ok ? '완료' : '아직'}</span></div>`; }).join('')}</div>
     ${!m.confirmed && top ? `<div class="best"><span class="k">지금 가장 좋은 날</span><b>${fmt(top.d)}</b><span style="margin-left:auto;color:var(--accent);font-weight:700">${top.who.length}명</span></div>` : ''}
     <div class="btns">
-      <button class="btn ${m.confirmed ? 'sec' : 'pri'}" data-act="enter">${meIn && ent.includes(meIn) ? '내 날짜 수정' : '내 날짜 입력'}</button>
+      <button class="btn ${meIn && ent.includes(meIn) ? 'sec' : 'pri'}" data-act="enter">${meIn && ent.includes(meIn) ? '내 날짜 수정하기' : '내 날짜 입력하기'}</button>
       <button class="btn plain" data-act="result" data-v="${m.id}">모두의 결과 보기</button>
     </div>
   </article>
@@ -940,7 +940,7 @@ function vResult() {
     return `<button type="button" class="day ${cls} l${n} ${n === 0 ? 'in' : ''} ${m.confirmed === k ? 'conf' : ''}" data-act="day" data-v="${k}" aria-label="${fmt(k)}, ${n}명 가능">${d}${n ? `<span class="n">${n === MEMBERS.length ? '모두' : n + '명'}</span>` : ''}</button>`;
   })}
   <div class="legend"><span class="sp">0명</span>${levels}<span class="sp">5명</span></div>`}
-  <div class="btns" style="margin-top:20px">${isCur ? `<button class="btn sec" data-act="enter">${S.me && ent.includes(S.me) ? '내 날짜 수정' : '내 날짜 입력'}</button>` : ''}<button class="btn plain" data-act="edit" data-v="${m.id}">모임 이름·후보 기간 수정</button></div>`;
+  <div class="btns" style="margin-top:20px">${isCur ? `<button class="btn ${S.me && ent.includes(S.me) ? 'sec' : 'pri'}" data-act="enter">${S.me && ent.includes(S.me) ? '내 날짜 수정하기' : '내 날짜 입력하기'}</button>` : ''}<button class="btn plain" data-act="edit" data-v="${m.id}">모임 이름·후보 기간 수정</button></div>`;
 }
 
 function vNew() {
