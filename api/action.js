@@ -95,6 +95,12 @@ async function apply(op) {
       need(Array.isArray(op.dates) && op.dates.length <= 400, '날짜를 다시 골라주세요.');
       const dates = [...new Set(op.dates)].filter(d => DATE.test(d) && d >= m.start && d <= m.end).sort();
       await redis('HSET', `avail:${m.id}`, op.member, JSON.stringify(dates));
+      // All five can make it on some day -> confirm the earliest such day automatically.
+      if (!m.confirmed && m.status === 'voting') {
+        const all = Object.fromEntries(Object.entries(pairs(await redis('HGETALL', `avail:${m.id}`))).map(([k, v]) => [k, JSON.parse(v)]));
+        const day = MEMBERS.every(x => all[x]) ? all[MEMBERS[0]].filter(d => MEMBERS.every(x => all[x].includes(d))).sort()[0] : null;
+        if (day) { await pipeline([saveMeeting({ ...m, confirmed: day, status: 'confirmed' })]); return { autoConfirmed: day }; }
+      }
       return {};
     }
     case 'confirm': {

@@ -212,7 +212,12 @@ h1,h2,h3{text-wrap:balance}
 .danger-zone p{margin:0;font-size:13px;color:var(--muted)}
 .edit-chip{margin-left:auto;height:28px;padding:0 10px;font-size:12px}
 .card.season{position:relative;overflow:hidden;background:linear-gradient(180deg,var(--sea) 0,var(--surface) 210px)}
-.card.season > :not(.fall){position:relative}
+.card.season > :not(.fall):not(.season-art){position:relative}
+/* character sits right above the 모이는 날 box; its bottom tucks behind the box */
+.art-anchor{height:0}
+.season-art{position:absolute;right:20px;bottom:-34px;width:100px;height:auto;pointer-events:none}
+.card.has-art .eyebrow,.card.has-art .h2,.card.has-art .sub-msg{padding-right:112px}
+.edit-chip.inl{margin-left:2px}
 .s-winter{--sea:var(--sea-winter)} .s-spring{--sea:var(--sea-spring)} .s-summer{--sea:var(--sea-summer)} .s-autumn{--sea:var(--sea-autumn)}
 .card.season .plan{border:2px solid var(--primary)}
 .fall{position:absolute;inset:0 0 auto 0;height:210px;pointer-events:none;overflow:hidden}
@@ -721,7 +726,7 @@ async function boot() {
   try {
     const r = await fetch('/api/state', { cache: 'no-store' });
     if (r.ok) { const j = await r.json(); MODE = 'server'; S = { me: readMe(), meetings: j.meetings || [], profiles: j.profiles || {}, features: j.features || {} }; }
-    else if (LOCAL_PREVIEW && (r.status === 404 || r.status === 503)) { MODE = 'local'; S = load(); }
+    else if (LOCAL_PREVIEW && (r.status === 404 || r.status === 503)) { MODE = 'local'; S = load(); autoConfirmLocal(); }
     else { MODE = 'error'; bootError = (await r.json().catch(() => ({}))).error || ''; }
   } catch (e) { MODE = LOCAL_PREVIEW ? 'local' : 'error'; if (MODE === 'local') S = load(); }
   render();
@@ -801,7 +806,7 @@ function stage(m) {
   return m.status === 'archived' ? 'ended' : 'voting';
 }
 const STAGE_LABEL = { voting: '날짜 고르는 중', confirmed: '날짜 확정', over: '모임 완료', ended: '확정 없이 끝남' };
-const stagePill = m => { const st = stage(m); return `<span class="pill st-${st}">${STAGE_LABEL[st]}</span>`; };
+const stagePill = m => { const st = stage(m); return st === 'confirmed' ? '' : `<span class="pill st-${st}">${STAGE_LABEL[st]}</span>`; }; /* 날짜 확정은 라벨 없이 */
 function fmtTime(t) {
   if (!t) return '';
   const [h, mi] = t.split(':').map(Number);
@@ -867,6 +872,13 @@ function vEmpty() {
   ${footer()}`;
 }
 /* 확정된 모임 카드: 모이는 달의 계절 배경 — 겨울 하늘색+눈, 봄 연핑크+벚꽃잎, 여름 연민트, 가을 연베이지 */
+/* 확정 카드 오른쪽 위 캐릭터: 모임 달 기준 (그림이 있는 것만) */
+const ART_READY = ['winter-fox', 'spring-koala'];
+function seasonArt(k) {
+  const mo = parse(k).getMonth() + 1;
+  const f = mo === 12 || mo <= 2 ? 'winter-fox' : mo <= 5 ? 'spring-koala' : mo <= 8 ? 'summer-babsae' : mo <= 10 ? 'autumn-pigeon' : 'lateautumn-dog';
+  return ART_READY.includes(f) ? f : null;
+}
 const season = k => ['winter', 'winter', 'spring', 'spring', 'spring', 'summer', 'summer', 'summer', 'autumn', 'autumn', 'autumn', 'winter'][parse(k).getMonth()];
 function fall(se) {
   const kind = se === 'winter' ? 'flake' : se === 'spring' ? 'petal' : '';
@@ -876,7 +888,7 @@ function fall(se) {
 }
 function vHome() {
   if (!cur()) return vEmpty();
-  const m = cur(), ent = entered(m), top = ranking(m)[0], meIn = S.me;
+  const m = cur(), ent = entered(m), top = ranking(m)[0], meIn = S.me, art = m.confirmed ? seasonArt(m.confirmed) : null;
   const pct = Math.round(ent.length / MEMBERS.length * 100);
   const recs = S.meetings.filter(x => x !== m);
   const years = [...new Set(recs.map(r => r.year))].sort((a, b) => b - a);
@@ -885,11 +897,12 @@ function vHome() {
     <h1 class="logo"><span class="logo-mark" role="img" aria-label="SIG·GU 식구"></span></h1>
     <div class="hdr-actions">${themeBtn()}<button class="me-chip" data-act="who">${meIn ? `${av(meIn, 'sm')}<span><b>${M[meIn].name}</b> · 바꾸기</span>` : '<span>누구세요? <b>선택하기</b></span>'}</button></div>
   </header>
-  <article class="card${m.confirmed ? ` season s-${season(m.confirmed)}` : ''}">
+  <article class="card${m.confirmed ? ` season s-${season(m.confirmed)}` : ''}${art ? ' has-art' : ''}">
     ${m.confirmed ? fall(season(m.confirmed)) : ''}
-    <div class="eyebrow">${label(m)} ${stagePill(m)}<button class="chipbtn edit-chip" data-act="edit" data-v="${m.id}">수정</button></div>
+    <div class="eyebrow">${label(m)} ${stagePill(m)}<button class="chipbtn edit-chip${art ? ' inl' : ''}" data-act="edit" data-v="${m.id}">수정</button></div>
     <h2 class="h2">${esc(m.title)}</h2>
     ${m.confirmed ? `<p class="range sub-msg">${esc(subMsg(m))}</p>` : `<p class="range">후보 ${fmt(m.start)} ~ ${fmt(m.end)}</p>`}
+    ${art ? `<div class="art-anchor" aria-hidden="true"><img class="season-art" src="assets/season/${art}.webp" alt=""></div>` : ''}
     ${m.confirmed ? planBlock(m) : ''}
     ${membersOpen()}${MEMBERS.map((x, i) => { const ok = ent.includes(x.id); return `<div class="mem ${x.id === meIn ? 'me' : ''} ${ok ? '' : 'pending'} ${cheers(i) ? 'cheer' : ''}" style="--i:${i}" role="button" tabindex="0" data-act="profile" data-v="${x.id}" aria-label="${x.name} 프로필">${figure(x, ok, x.name + (ok ? '' : ' (아직)'))}<span class="nm">${x.name}</span><span class="st ${ok ? 'ok' : ''}">${ok ? '완료' : '아직'}</span></div>`; }).join('')}</div>
     ${!m.confirmed && top ? `<div class="best"><span class="k">지금 가장 좋은 날</span><b>${fmt(top.d)}</b><span style="margin-left:auto;color:var(--accent);font-weight:700">${top.who.length}명</span></div>` : ''}
@@ -1110,8 +1123,20 @@ function sheetConfirm(k) {
   openSheet(`<h2>${fmt(k)}로 확정할까요?</h2><p class="sub">${who.length}명 가능 · ${note(m, who)}<br>확정하면 모두의 홈 화면에 이 날짜가 보여요.${m.confirmed ? `<br>지금 확정된 ${fmt(m.confirmed)}은 바뀌어요.` : ''}</p>
     <div class="row-btns"><button class="btn plain" data-act="close">취소</button><button class="btn pri" data-act="conf" data-v="${k}">확정하기</button></div>`);
 }
+/* test page: dates entered before auto-confirm existed get confirmed on load too */
+function autoConfirmLocal() {
+  let changed = false;
+  S.meetings.forEach(m => { const day = !m.confirmed && m.status === 'voting' && allFiveDay(m); if (day) { m.confirmed = day; m.status = 'confirmed'; changed = true; } });
+  if (changed) save();
+}
+/* earliest day all five marked (auto-confirm), or null */
+function allFiveDay(m) {
+  const a = m.avail || {};
+  if (!MEMBERS.every(x => (a[x.id] || []).length)) return null;
+  return [...a[MEMBERS[0].id]].filter(d => MEMBERS.every(x => a[x.id].includes(d))).sort()[0] || null;
+}
 function sheetPlan(id) {
-  const m = byId(id), log = (m.log || []).slice(-5).reverse();
+  const m = byId(id);
   const quick = [['12:00', '점심 12시'], ['13:00', '오후 1시'], ['14:00', '오후 2시'], ['15:00', '오후 3시']];
   openSheet(`<h2>시간·장소</h2><p class="sub">${fmtY(m.confirmed)} · 식구 모두가 보고 바꿀 수 있어요.</p>
     <form id="pf" novalidate>
@@ -1119,8 +1144,7 @@ function sheetPlan(id) {
         <div class="qt">${quick.map(([v, t]) => `<button type="button" class="chipbtn" data-act="settime" data-v="${v}">${t}</button>`).join('')}</div></div>
       <div class="field"><label for="pl-place">만나는 장소</label><input id="pl-place" maxlength="40" placeholder="예: 성수역 3번 출구" value="${esc(m.place || '')}" autocomplete="off"></div>
       <div class="row-btns"><button type="button" class="btn plain" data-act="close">취소</button><button type="submit" class="btn pri">저장하기</button></div>
-    </form>
-    ${log.length ? `<div class="grp"><div class="grp-t">바뀐 기록</div><ul class="log">${log.map(l => `<li>${av(l.by, 'sm')}<span class="lx">${M[l.by].name} · ${esc(l.text)}</span><span class="lt">${stamp(l.at)}</span></li>`).join('')}</ul></div>` : ''}`);
+    </form>`);
   document.getElementById('pf').addEventListener('submit', e => { e.preventDefault(); savePlan(id); });
 }
 function savePlan(id) {
@@ -1320,8 +1344,17 @@ document.addEventListener('click', e => {
     case 'clear': { const old = [...draft]; draft.clear(); old.forEach(paintEl); updCount(); break; }
     case 'save': {
       const m = cur(), dates = [...draft].sort();
-      commit({ type: 'avail', mid: m.id, member: S.me, dates }, () => { m.avail[S.me] = dates; })
-        .then(ok => { if (ok) { closeSheet(); viewMid = m.id; go('result'); toast(`${dates.length}일 저장했어요`); } });
+      const was = m.confirmed;
+      commit({ type: 'avail', mid: m.id, member: S.me, dates }, () => {
+        m.avail[S.me] = dates;
+        const day = !m.confirmed && m.status === 'voting' && allFiveDay(m);
+        if (day) { m.confirmed = day; m.status = 'confirmed'; }
+      }).then(ok => {
+        if (!ok) return;
+        closeSheet(); const now = byId(m.id) || m;
+        if (!was && now.confirmed) { viewMid = null; go('home'); toast(`5명 모두 되는 ${fmt(now.confirmed)}로 확정됐어요 🎉`); }
+        else { viewMid = m.id; go('result'); toast(`${dates.length}일 저장했어요`); }
+      });
       break;
     }
     case 'retry': MODE = 'loading'; render(); boot(); break;
