@@ -804,8 +804,8 @@ function fmtTime(t) {
 }
 const stamp = s => { const d = new Date(s); return `${d.getMonth() + 1}/${d.getDate()} ${pad(d.getHours())}:${pad(d.getMinutes())}`; };
 function planBlock(m, withYear) {
-  const has = m.time || m.place || m.course, editable = !!dday(m.confirmed); /* past meetings are read-only */
-  const unset = editable ? '아직 안 정했어요' : '기록이 없어요';
+  const has = m.time || m.place || m.course, upcoming = !!dday(m.confirmed); /* past meetings: '기록 수정' instead of planning */
+  const unset = upcoming ? '아직 안 정했어요' : '기록이 없어요';
   const stops = (m.course || '').split('\n').filter(Boolean);
   return `<section class="plan" aria-label="확정된 모임 정보">
     <div class="plan-h"><span class="pin" aria-hidden="true">📌</span><div><div class="t">모이는 날</div><div class="d">${withYear ? fmtY(m.confirmed) : fmt(m.confirmed)}</div></div>${dday(m.confirmed) ? `<span class="dday ${dday(m.confirmed) === 'D-DAY' ? 'today' : ''}">${dday(m.confirmed)}</span>` : ''}</div>
@@ -814,10 +814,10 @@ function planBlock(m, withYear) {
       <div class="pl-row"><span class="pl-k">장소</span><span class="pl-v ${m.place ? '' : 'unset'}">${m.place ? esc(m.place) : unset}</span></div>
       <div class="pl-row"><span class="pl-k">코스</span>${stops.length ? `<span class="pl-v course">${stops.map((x, i) => `<span class="stop">${i ? '<span class="arr" aria-hidden="true">→</span>' : ''}<i>${i + 1}</i>${esc(x)}</span>`).join(' ')}</span>` : `<span class="pl-v unset">${unset}</span>`}</div>
     </div>
-    ${editable || m.place ? `<div class="plan-btns">
-      ${editable ? `<button class="btn ${has ? 'plain' : 'pri'}" data-act="plan" data-v="${m.id}">${has ? '일정 바꾸기' : '시간·장소·코스 정하기'}</button>` : ''}
+    <div class="plan-btns">
+      <button class="btn ${has || !upcoming ? 'plain' : 'pri'}" data-act="plan" data-v="${m.id}">${!upcoming ? '기록 수정' : has ? '일정 바꾸기' : '시간·장소·코스 정하기'}</button>
       ${m.place ? `<a class="btn plain" href="https://map.naver.com/p/search/${encodeURIComponent(m.place)}" target="_blank" rel="noopener">지도 보기</a>` : ''}
-    </div>` : ''}
+    </div>
   </section>`;
 }
 
@@ -1127,7 +1127,7 @@ function savePlan(id) {
     m.time = time; m.place = place; m.course = course;
   }).then(ok => { if (ok) { closeSheet(); render(); toast('일정을 저장했어요'); } });
 }
-function openPlan(id) { const m = byId(id); if (m && m.confirmed && !dday(m.confirmed)) { toast('지난 모임은 바꿀 수 없어요'); return; } if (!S.me) { pendingAfterPick = 'plan:' + id; sheetWho(); } else sheetPlan(id); }
+function openPlan(id) { if (!S.me) { pendingAfterPick = 'plan:' + id; sheetWho(); } else sheetPlan(id); }
 function sheetLeave() {
   openSheet(`<h2>저장하지 않고 나갈까요?</h2><p class="sub">고른 날짜가 저장되지 않아요.</p>
     <div class="row-btns"><button class="btn plain" data-act="drop">나가기</button><button class="btn pri" data-act="save">저장하기</button></div>`);
