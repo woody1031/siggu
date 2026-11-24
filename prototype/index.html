@@ -28,7 +28,6 @@
    radius r1 4 / r2 8 / r3 12 / r4 16 / r6 24, bold action buttons. Token names below are this page's own;
    the comment after each value names the SEED token it comes from. */
 :root{
-  --sea-winter:#E3F0FF; --sea-spring:#FFE9F0; --sea-summer:#E0F6EC; --sea-autumn:#FFEFD9; --plan-line:#FFB27F;
   --bg:#F3F4F5;            /* bg-layer-basement */
   --surface:#FFFFFF;       /* bg-layer-default */
   --floating:#FFFFFF;      /* bg-layer-floating */
@@ -63,7 +62,6 @@
   --f-body:-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Pretendard Variable",Pretendard,"Segoe UI",Roboto,"Helvetica Neue",Arial,"Noto Sans",sans-serif,"Apple Color Emoji","Segoe UI Emoji","Segoe UI Symbol";
 }
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
-  --sea-winter:#13233A; --sea-spring:#33202A; --sea-summer:#122E27; --sea-autumn:#33271A; --plan-line:#9A4A14;
   --bg:#000000; --surface:#16171B; --floating:#1D2025; --ink:#F3F4F5; --muted:#DCDEE3; --subtle:#B0B3BA;
   --muted-bg:#2B2E35; --muted-bg-pressed:#393D46; --pressed:rgba(255,255,255,.05);
   --line:#2B2E35; --line-muted:rgba(255,255,255,.09); --line-strong:#393D46; --ring:#1E82EB;
@@ -79,7 +77,6 @@
   --shadow-s1:0 1px 4px rgba(0,0,0,.5); --shadow-s2:0 2px 10px rgba(0,0,0,.68); --shadow-lg:0 4px 16px rgba(0,0,0,.8);
   color-scheme:dark}}
 :root[data-theme="dark"]{
-  --sea-winter:#13233A; --sea-spring:#33202A; --sea-summer:#122E27; --sea-autumn:#33271A; --plan-line:#9A4A14;
   --bg:#000000; --surface:#16171B; --floating:#1D2025; --ink:#F3F4F5; --muted:#DCDEE3; --subtle:#B0B3BA;
   --muted-bg:#2B2E35; --muted-bg-pressed:#393D46; --pressed:rgba(255,255,255,.05);
   --line:#2B2E35; --line-muted:rgba(255,255,255,.09); --line-strong:#393D46; --ring:#1E82EB;
@@ -210,14 +207,7 @@ h1,h2,h3{text-wrap:balance}
 .btn.del-solid{background:var(--destructive);color:#fff}
 .danger-zone{margin-top:32px;padding-top:20px;border-top:1px solid var(--line);display:grid;gap:12px}
 .danger-zone p{margin:0;font-size:13px;color:var(--muted)}
-.edit-chip{flex:none;margin-left:auto;height:28px;padding:0 10px;font-size:12px}
-.card.season{position:relative;overflow:hidden;background:linear-gradient(180deg,var(--sea) 0,var(--surface) 210px)}
-.card.season > :not(.snow){position:relative}
-.s-winter{--sea:var(--sea-winter)} .s-spring{--sea:var(--sea-spring)} .s-summer{--sea:var(--sea-summer)} .s-autumn{--sea:var(--sea-autumn)}
-.card.season .plan{border-color:var(--plan-line)}
-.snow{position:absolute;inset:0 0 auto 0;height:200px;pointer-events:none;overflow:hidden}
-.snow i{position:absolute;top:-10px;left:var(--x);width:var(--s);height:var(--s);border-radius:50%;background:#fff;opacity:0;box-shadow:0 0 3px rgba(120,160,210,.35);animation:snow var(--d) linear var(--w) infinite}
-@keyframes snow{0%{transform:translate(0,0);opacity:0}12%{opacity:var(--o)}50%{transform:translate(10px,100px)}80%{opacity:var(--o)}100%{transform:translate(-6px,205px);opacity:0}}
+.edit-chip{margin-left:auto;height:28px;padding:0 10px;font-size:12px}
 .btn.danger{background:transparent;color:var(--muted)}
 .btn.danger:hover{background:var(--muted-bg);color:var(--ink)}
 .btn:active,.pick:active,.rec:active{transform:scale(.99)}
@@ -233,14 +223,6 @@ h1,h2,h3{text-wrap:balance}
 .plan-h .t{font-size:12px;color:var(--muted)}
 .plan-h .d{font-weight:600;letter-spacing:-.01em;font-size:18px;line-height:1.3}
 .plan-b{display:grid;gap:8px;padding:14px}
-.pl-v.course{display:block;font-size:15px;line-height:28px}
-.stop{display:inline-block;max-width:100%;margin-right:4px}
-.stop i{font-style:normal;display:inline-grid;place-items:center;width:18px;height:18px;margin-right:5px;vertical-align:1px;border-radius:50%;background:var(--brand-weak);color:var(--brand-weak-fg);font-size:11px;font-weight:700}
-.arr{color:var(--subtle);font-size:13px;margin:0 6px 0 2px}
-.hint-in{font-weight:400;color:var(--subtle);font-size:12px;margin-left:4px}
-.field textarea{border:0;border-radius:var(--radius);box-shadow:inset 0 0 0 1px var(--line-strong);background:var(--surface);color:var(--ink);padding:12px 16px;font:inherit;font-size:16px;line-height:1.5;resize:vertical;min-height:96px;width:100%}
-.field textarea:focus{outline:none;box-shadow:inset 0 0 0 2px var(--ink)}
-.field textarea::placeholder{color:var(--subtle)}
 .pl-row{display:grid;grid-template-columns:36px minmax(0,1fr);gap:8px;align-items:baseline}
 .pl-k{font-size:12px;font-weight:500;color:var(--muted)}
 .pl-v{font-weight:500;font-size:15px;overflow-wrap:anywhere}
@@ -298,8 +280,7 @@ h1,h2,h3{text-wrap:balance}
 .rv-form textarea{flex:1;min-width:0;height:44px;resize:none;border:0;box-shadow:inset 0 0 0 1px var(--line-strong);border-radius:var(--radius);padding:11px 14px;font:inherit;font-size:16px;line-height:1.4;max-height:140px;background:var(--surface);color:var(--ink)}
 .rv-form textarea::placeholder{color:var(--subtle)}
 .rv-form textarea:focus{outline:none;box-shadow:inset 0 0 0 2px var(--ink)}
-.rv-form .rv-send{height:44px;padding:0 16px;font-size:15px;border-radius:var(--radius);flex:none}
-.rv-form textarea{overflow-y:hidden}
+.rv-send{height:44px;padding:0 16px;font-size:15px;flex:none}
 .cnt-sm{color:var(--primary);font-weight:700;margin-left:2px}
 .photo-add{width:100%;margin-top:10px;gap:6px}
 .photo-add svg{width:18px;height:18px}
@@ -469,7 +450,7 @@ body{letter-spacing:-.01em}
 .chipbtn{height:32px;padding:0 12px;border:0;border-radius:9999px;background:transparent;box-shadow:inset 0 0 0 1px var(--line-muted);font-size:13px;font-weight:500;color:var(--ink)}
 .chipbtn:hover,.chipbtn:active{background:var(--pressed)}
 .me-chip{height:36px;border:0;border-radius:9999px;background:var(--surface);box-shadow:inset 0 0 0 1px var(--line-muted);font-weight:500}
-.edit-chip{height:28px;font-size:12px;background:var(--surface);box-shadow:inset 0 0 0 1px var(--line-strong)}
+.edit-chip{height:28px;font-size:12px}
 .dday{display:inline-flex;align-items:center;height:24px;padding:0 8px;border-radius:var(--radius-sm);background:var(--primary);color:var(--primary-fg);font-size:13px;font-weight:700;letter-spacing:.01em;font-variant-numeric:tabular-nums;white-space:nowrap}
 .dday.today{animation:none;background:var(--destructive)}
 .plan-h .dday{margin-left:auto;flex:none}
@@ -482,9 +463,6 @@ body{letter-spacing:-.01em}
 .prof h2{display:flex;align-items:center;gap:6px}
 .me-tag{font-size:12px;font-weight:700;padding:2px 6px;border-radius:var(--radius-sm);background:var(--brand-weak);color:var(--brand-weak-fg)}
 .prof .sub{margin-top:2px}
-.btn.kakao{background:#FEE500;color:#191919}
-.btn.kakao:hover{background:#F5DC00}
-.kk-note{margin:12px 2px 0;font-size:13px;color:var(--subtle);line-height:1.5}
 .prof-list{margin:20px 0 0;display:grid;border-top:1px solid var(--line)}
 .prof-list>div{display:grid;grid-template-columns:84px minmax(0,1fr);gap:12px;align-items:center;padding:14px 2px;border-bottom:1px solid var(--line)}
 .prof-list dt{font-size:14px;color:var(--subtle)}
@@ -567,7 +545,6 @@ body{letter-spacing:-.01em}
 
 @media (prefers-reduced-motion: reduce){*{transition:none!important;animation:none!important}
   /* exception: the small 14px character drop still plays (owner's choice) */
-  .snow i{animation:snow var(--d) linear var(--w) infinite!important}
   .members.intro .fig .char{animation:drop .34s cubic-bezier(.25,.8,.35,1) both!important;animation-delay:calc(60ms + var(--i, 0) * 70ms)!important}
   .members.intro .fig.bday-on .burst i{animation:pop .9s cubic-bezier(.15,.7,.3,1) both!important;animation-delay:calc(400ms + var(--i, 0) * 70ms + var(--j, 0) * 25ms)!important}
   .prof .fig.bday-on .burst i{animation:pop .9s cubic-bezier(.15,.7,.3,1) both!important;animation-delay:calc(250ms + var(--j, 0) * 25ms)!important}
@@ -709,7 +686,6 @@ async function api(op) {
   S.meetings = j.meetings;
   if (j.profiles) S.profiles = j.profiles;
   if (j.features) S.features = j.features;
-  if (j.kakao) S.kakao = j.kakao;
   return j;
 }
 /* Server mode: send the change, then use the state the server returns. Local mode: change here and save. */
@@ -721,12 +697,11 @@ async function commit(op, local) {
 async function boot() {
   try {
     const r = await fetch('/api/state', { cache: 'no-store' });
-    if (r.ok) { const j = await r.json(); MODE = 'server'; S = { me: readMe(), meetings: j.meetings || [], profiles: j.profiles || {}, features: j.features || {}, kakao: j.kakao || [] }; }
+    if (r.ok) { const j = await r.json(); MODE = 'server'; S = { me: readMe(), meetings: j.meetings || [], profiles: j.profiles || {}, features: j.features || {} }; }
     else if (LOCAL_PREVIEW && (r.status === 404 || r.status === 503)) { MODE = 'local'; S = load(); }
     else { MODE = 'error'; bootError = (await r.json().catch(() => ({}))).error || ''; }
   } catch (e) { MODE = LOCAL_PREVIEW ? 'local' : 'error'; if (MODE === 'local') S = load(); }
   render();
-  kakaoReturn();
   if (MODE === 'server') {
     setInterval(refresh, 30000);
     document.addEventListener('visibilitychange', () => { if (!document.hidden) refresh(); });
@@ -740,7 +715,6 @@ async function refresh() {
     const r = await fetch('/api/state', { cache: 'no-store' }); if (!r.ok) return;
     const j = await r.json(), next = JSON.stringify([j.meetings || [], j.profiles || {}]);
     if (next !== JSON.stringify([S.meetings, S.profiles || {}])) { S.meetings = j.meetings || []; S.profiles = j.profiles || {}; S.features = j.features || S.features; render(); }
-    S.kakao = j.kakao || S.kakao;
   } catch (e) {}
 }
 
@@ -779,27 +753,18 @@ const backIcon = '<svg viewBox="0 0 24 24" fill="none" stroke-width="2.4" stroke
 const topbar = (t, s = '', act = 'home') => `<header class="topbar"><button class="back" data-act="${act}" aria-label="뒤로">${backIcon}</button><div class="tb"><h1 class="tb-t">${t}</h1>${s ? `<p class="tb-s">${s}</p>` : ''}</div></header>`;
 const label = m => `${m.year}년 ${m.round}회차`;
 /* Line under a confirmed meeting's title: D-day messages first, then a birthday this month, then the meeting month's season. */
-/* 확정된 모임 제목 밑 한 줄: 생일 달이면 생일 축하, 아니면 날마다 바뀌는 응원·시 구절 (그날은 모두에게 같은 문구) */
-const DAILY_MSG = [
-  '“보고 싶은 마음 호수만 하니 눈 감을밖에” 정지용', '오늘 하루도 수고 많았어요 🍵', '웃으면 복이 와요, 오늘도 한 번 웃어요 😊',
-  '좋은 사람과 먹는 밥이 제일 맛있어요 🍚', '쉬어 가도 괜찮아요, 멈춘 게 아니니까요 🌿', '오늘의 나도 충분히 잘하고 있어요 👍',
-  '“별 하나에 추억과 별 하나에 사랑과” 윤동주', '작은 행복을 자주 찾는 하루 되길 🍀', '물 한 잔 마시고 기지개 한 번 켜요 💧',
-  '“엄마야 누나야 강변 살자” 김소월', '“어제도 가고 오늘도 갈 나의 길 새로운 길” 윤동주', '보고 싶은 사람이 있다는 건 좋은 일이에요 💛',
-  '오늘 걱정은 오늘만큼만 해요 🌙', '“산에는 꽃 피네 꽃이 피네” 김소월', '잘 자고 잘 먹는 게 제일 중요해요 😴',
-  '식구들 생각하면 힘이 나요 💪', '천천히 가도 끝까지 가면 돼요 🐢', '오늘 날씨처럼 마음도 맑기를 ☀️',
-  '“별을 노래하는 마음으로 모든 죽어가는 것을 사랑해야지” 윤동주', '좋아하는 노래 한 곡 듣고 가요 🎧', '누군가에게 안부 한 줄 보내 볼까요 📮',
-  '“떠날 때에 다시 만날 것을 믿습니다” 한용운', '오늘 하루 나에게 칭찬 한마디 👏', '맛있는 거 먹고 기운 내요 🍰',
-  '실수해도 괜찮아요, 그만큼 배웠으니까 📒', '하늘 한 번 올려다보는 여유 ☁️', '만날 날까지 다들 건강하기 🍊',
-  '웃음은 나눌수록 커져요 😄', '오늘도 무사히, 그거면 충분해요 🌼', '다음 모임 생각하며 오늘도 화이팅 ✨',
-];
+const MONTH_MSG = ['', '식구들 새해복 많이 받아요 ❄️', '아직 추워요, 목도리 꼭 챙겨요 🧣', '환절기 감기 조심, 따뜻하게 입고 만나요 🌱',
+  '벚꽃 지기 전에 식구들 얼굴 봐요 🌸', '바람 좋은 날, 식구들 빨리 만나고 싶어요 🌿', '슬슬 더워져요, 시원한 데서 만나요 🍉',
+  '더위 조심! 물 많이 마시고 만나요 🧊', '여름 가기 전에 한 번 더 모여요 ☀️', '아침저녁 쌀쌀해요, 겉옷 챙겨요 🍂',
+  '단풍처럼 알록달록 즐겁게 만나요 🍁', '환절기 따뜻하게 입고 만나요 🧥', '올해도 수고했어요, 연말에 만나요 🎄'];
 function subMsg(m) {
-  const d = dday(m.confirmed), bday = MEMBERS.filter(x => bdayLevel(x) === 'on').map(x => x.name);
-  if (d && bday.length) return `이번 달은 ${bday.join(', ')} 생일! 축하해요 🎂`; /* 지난 모임엔 안 붙여요 */
+  const d = dday(m.confirmed);
   if (d === 'D-DAY') return '오늘 만나요! 조심히 와요 🚶';
   if (d === 'D-1') return '내일 만나요! 늦지 않기 ⏰';
   if (!d) return '즐거웠어요, 후기 남겨줘요 💬';
-  const t = new Date(), day = Math.floor(Date.UTC(t.getFullYear(), t.getMonth(), t.getDate()) / 86400000);
-  return DAILY_MSG[day % DAILY_MSG.length];
+  const bday = MEMBERS.filter(x => bdayLevel(x) === 'on').map(x => x.name);
+  if (bday.length) return `이번 달은 ${bday.join(', ')} 생일! 축하해요 🎂`;
+  return MONTH_MSG[parse(m.confirmed).getMonth() + 1];
 }
 /* D-day to a confirmed date: 'D-12', 'D-DAY', or '' once it has passed */
 function dday(k) {
@@ -813,7 +778,7 @@ function stage(m) {
   return m.status === 'archived' ? 'ended' : 'voting';
 }
 const STAGE_LABEL = { voting: '날짜 고르는 중', confirmed: '날짜 확정', over: '모임 완료', ended: '확정 없이 끝남' };
-const stagePill = m => { const st = stage(m); return st === 'confirmed' ? '' : `<span class="pill st-${st}">${STAGE_LABEL[st]}</span>`; }; /* 날짜 확정은 라벨 없이 (카드 배경이 대신 알려줘요) */
+const stagePill = m => { const st = stage(m); return `<span class="pill st-${st}">${STAGE_LABEL[st]}</span>`; };
 function fmtTime(t) {
   if (!t) return '';
   const [h, mi] = t.split(':').map(Number);
@@ -822,18 +787,16 @@ function fmtTime(t) {
 }
 const stamp = s => { const d = new Date(s); return `${d.getMonth() + 1}/${d.getDate()} ${pad(d.getHours())}:${pad(d.getMinutes())}`; };
 function planBlock(m, withYear) {
-  const has = m.time || m.place || m.course, upcoming = !!dday(m.confirmed); /* past meetings: '기록 수정' instead of planning */
-  const unset = upcoming ? '아직 안 정했어요' : '기록이 없어요';
-  const stops = (m.course || '').split('\n').filter(Boolean);
+  const has = m.time || m.place, last = (m.log || [])[(m.log || []).length - 1];
   return `<section class="plan" aria-label="확정된 모임 정보">
     <div class="plan-h"><span class="pin" aria-hidden="true">📌</span><div><div class="t">모이는 날</div><div class="d">${withYear ? fmtY(m.confirmed) : fmt(m.confirmed)}</div></div>${dday(m.confirmed) ? `<span class="dday ${dday(m.confirmed) === 'D-DAY' ? 'today' : ''}">${dday(m.confirmed)}</span>` : ''}</div>
     <div class="plan-b">
-      <div class="pl-row"><span class="pl-k">시간</span><span class="pl-v ${m.time ? '' : 'unset'}">${m.time ? fmtTime(m.time) : unset}</span></div>
-      <div class="pl-row"><span class="pl-k">장소</span><span class="pl-v ${m.place ? '' : 'unset'}">${m.place ? esc(m.place) : unset}</span></div>
-      <div class="pl-row"><span class="pl-k">코스</span>${stops.length ? `<span class="pl-v course">${stops.map((x, i) => `<span class="stop">${i ? '<span class="arr" aria-hidden="true">→</span>' : ''}${esc(x)}</span>`).join(' ')}</span>` : `<span class="pl-v unset">${unset}</span>`}</div>
+      <div class="pl-row"><span class="pl-k">시간</span><span class="pl-v ${m.time ? '' : 'unset'}">${m.time ? fmtTime(m.time) : '아직 안 정했어요'}</span></div>
+      <div class="pl-row"><span class="pl-k">장소</span><span class="pl-v ${m.place ? '' : 'unset'}">${m.place ? esc(m.place) : '아직 안 정했어요'}</span></div>
+      ${last ? `<div class="pl-by">${ga(M[last.by].name)} ${stamp(last.at)}에 마지막으로 바꿨어요</div>` : ''}
     </div>
     <div class="plan-btns">
-      <button class="btn ${has || !upcoming ? 'plain' : 'pri'}" data-act="plan" data-v="${m.id}">${!upcoming ? '기록 수정' : has ? '일정 바꾸기' : '시간·장소·코스 정하기'}</button>
+      <button class="btn ${has ? 'plain' : 'pri'}" data-act="plan" data-v="${m.id}">${has ? '시간·장소 바꾸기' : '시간·장소 정하기'}</button>
       ${m.place ? `<a class="btn plain" href="https://map.naver.com/p/search/${encodeURIComponent(m.place)}" target="_blank" rel="noopener">지도 보기</a>` : ''}
     </div>
   </section>`;
@@ -860,7 +823,7 @@ function calendar(m, cell) {
 const footer = () => MODE !== 'local' ? '' : `<footer class="foot"><span>프로토타입 · 이 폰에만 저장돼요</span><span><button class="linkbtn" data-act="reset">예시 데이터 보기</button> · <button class="linkbtn" data-act="wipe">처음 상태로 비우기</button></span></footer>`;
 const brand = () => `<header class="brand">
     <h1 class="logo"><span class="logo-mark" role="img" aria-label="SIG·GU 식구"></span></h1>
-    <div class="hdr-actions">${themeBtn()}<button class="me-chip" ${S.me ? `data-act="profile" data-v="${S.me}"` : 'data-act="who"'}>${S.me ? `${av(S.me, 'sm')}<span><b>${M[S.me].name}</b></span>` : '<span>누구세요? <b>선택하기</b></span>'}</button></div>
+    <div class="hdr-actions">${themeBtn()}<button class="me-chip" data-act="who">${S.me ? `${av(S.me, 'sm')}<span><b>${M[S.me].name}</b> · 바꾸기</span>` : '<span>누구세요? <b>선택하기</b></span>'}</button></div>
   </header>`;
 function vEmpty() {
   return `${brand()}
@@ -880,10 +843,6 @@ function vEmpty() {
   <div class="empty">모임을 마치면 여기에 해마다 기록이 쌓여요.</div>
   ${footer()}`;
 }
-/* 확정된 모임 카드: 모이는 달의 계절 배경 (겨울은 눈이 내려요) */
-const season = k => ['winter', 'winter', 'spring', 'spring', 'spring', 'summer', 'summer', 'summer', 'autumn', 'autumn', 'autumn', 'winter'][parse(k).getMonth()];
-const snow = () => `<div class="snow" aria-hidden="true">${Array.from({ length: 16 }, (_, i) =>
-  `<i style="--x:${(i * 37 + 11) % 100}%;--s:${4 + (i * 7) % 5}px;--d:${(5 + (i * 13) % 5).toFixed(1)}s;--w:${-((i * 29) % 60) / 10}s;--o:${(0.55 + ((i * 17) % 40) / 100).toFixed(2)}"></i>`).join('')}</div>`;
 function vHome() {
   if (!cur()) return vEmpty();
   const m = cur(), ent = entered(m), top = ranking(m)[0], meIn = S.me;
@@ -893,10 +852,9 @@ function vHome() {
   return `
   <header class="brand">
     <h1 class="logo"><span class="logo-mark" role="img" aria-label="SIG·GU 식구"></span></h1>
-    <div class="hdr-actions">${themeBtn()}<button class="me-chip" ${meIn ? `data-act="profile" data-v="${meIn}"` : 'data-act="who"'}>${meIn ? `${av(meIn, 'sm')}<span><b>${M[meIn].name}</b></span>` : '<span>누구세요? <b>선택하기</b></span>'}</button></div>
+    <div class="hdr-actions">${themeBtn()}<button class="me-chip" data-act="who">${meIn ? `${av(meIn, 'sm')}<span><b>${M[meIn].name}</b> · 바꾸기</span>` : '<span>누구세요? <b>선택하기</b></span>'}</button></div>
   </header>
-  <article class="card${m.confirmed ? ` season s-${season(m.confirmed)}` : ''}">
-    ${m.confirmed && season(m.confirmed) === 'winter' ? snow() : ''}
+  <article class="card">
     <div class="eyebrow">${label(m)} ${stagePill(m)}<button class="chipbtn edit-chip" data-act="edit" data-v="${m.id}">수정</button></div>
     <h2 class="h2">${esc(m.title)}</h2>
     ${m.confirmed ? `<p class="range sub-msg">${esc(subMsg(m))}</p>` : `<p class="range">후보 ${fmt(m.start)} ~ ${fmt(m.end)}</p>`}
@@ -930,7 +888,7 @@ function vInput() {
 }
 
 function vResult() {
-  const m = byId(viewMid) || cur(), ent = entered(m), rk = ranking(m), map = dayMap(m), isCur = m === cur(), past = !!m.confirmed && !dday(m.confirmed);
+  const m = byId(viewMid) || cur(), ent = entered(m), rk = ranking(m), map = dayMap(m), isCur = m === cur();
   const pend = MEMBERS.filter(x => !ent.includes(x.id)).map(x => x.name);
   const top3 = rk.slice(0, 3);
   const levels = [0, 1, 2, 3, 4, 5].map(i => `<i style="background:var(--heat${i})"></i>`).join('');
@@ -939,7 +897,7 @@ function vResult() {
   ${m.confirmed ? `<h2 class="section-t">모임 사진</h2>${photoBlock(m)}` : ''}
   ${m.confirmed ? `<h2 class="section-t">모임 후기${(m.comments || []).length ? ` <span class="cnt-sm">${m.comments.length}</span>` : ''}</h2>${reviewBlock(m)}` : ''}
   ${ent.length ? `<p class="status" style="margin-top:12px">${ent.length}/${MEMBERS.length}명 입력${pend.length ? ` · ${pend.join(', ')} 아직이에요` : ' · 모두 입력했어요'}</p>` : ''}
-  ${!ent.length ? past ? '' : `<div class="empty" style="margin-top:12px"><span class="big" aria-hidden="true">${m.confirmed ? '📌' : '🗓️'}</span>${m.confirmed ? '이 모임은 확정 기록만 남아 있어요.' : '아직 아무도 날짜를 찍지 않았어요.<br>첫 번째로 찍어볼까요?'}</div>` : `
+  ${!ent.length ? `<div class="empty" style="margin-top:12px"><span class="big" aria-hidden="true">${m.confirmed ? '📌' : '🗓️'}</span>${m.confirmed ? '이 모임은 확정 기록만 남아 있어요.' : '아직 아무도 날짜를 찍지 않았어요.<br>첫 번째로 찍어볼까요?'}</div>` : `
   <h2 class="section-t" style="margin-top:16px">추천 날짜</h2>
   ${top3.length ? `<div class="picks">${top3.map((r, i) => `
     <button class="pick ${i === 0 ? 'first' : ''} ${r.who.length === MEMBERS.length ? 'all' : ''}" data-act="day" data-v="${r.d}">
@@ -957,7 +915,7 @@ function vResult() {
     return `<button type="button" class="day ${cls} l${n} ${n === 0 ? 'in' : ''} ${m.confirmed === k ? 'conf' : ''}" data-act="day" data-v="${k}" aria-label="${fmt(k)}, ${n}명 가능">${d}${n ? `<span class="n">${n === MEMBERS.length ? '모두' : n + '명'}</span>` : ''}</button>`;
   })}
   <div class="legend"><span class="sp">0명</span>${levels}<span class="sp">5명</span></div>`}
-  ${past ? '' : `<div class="btns" style="margin-top:20px">${isCur ? `<button class="btn sec" data-act="enter">${S.me && ent.includes(S.me) ? '내 날짜 수정' : '내 날짜 입력'}</button>` : ''}<button class="btn plain" data-act="edit" data-v="${m.id}">모임 이름·후보 기간 수정</button></div>`}`;
+  <div class="btns" style="margin-top:20px">${isCur ? `<button class="btn sec" data-act="enter">${S.me && ent.includes(S.me) ? '내 날짜 수정' : '내 날짜 입력'}</button>` : ''}<button class="btn plain" data-act="edit" data-v="${m.id}">모임 이름·후보 기간 수정</button></div>`;
 }
 
 function vNew() {
@@ -1056,25 +1014,13 @@ document.addEventListener('keydown', e => {
 
 /* ---------- sheets ---------- */
 function sheetWho() {
-  if (S.me) { sheetProfile(S.me); return; } /* chosen once per phone */
-  openSheet(`<h2>누구세요?</h2><p class="sub">한 번 고르면 이 폰에서는 바꿀 수 없어요.</p>
-  <div class="who-grid">${MEMBERS.map(x => `<button class="pickme" data-act="pickme" data-v="${x.id}">${av(x.id, 'lg')}${x.name}</button>`).join('')}</div>`);
-}
-function sheetWhoConfirm(id) {
-  openSheet(`<div class="prof">${figure(M[id], true, M[id].name)}<h2>${esc(M[id].name)}${hasBatchim(M[id].name) ? '이' : ''} 맞나요?</h2><p class="sub">한 번 정하면 이 폰에서는 다른 사람으로 바꿀 수 없어요.</p></div>
-    <div class="row-btns"><button class="btn plain" data-act="who">다시 고르기</button><button class="btn pri" data-act="pickme-ok" data-v="${id}">맞아요</button></div>`);
+  openSheet(`<h2>누구세요?</h2><p class="sub">한 번 고르면 이 폰에서 기억해요.</p>
+  <div class="who-grid">${MEMBERS.map(x => `<button class="pickme ${S.me === x.id ? 'on' : ''}" data-act="pickme" data-v="${x.id}">${av(x.id, 'lg')}${x.name}</button>`).join('')}</div>
+  ${S.me ? `<div class="btns"><button class="btn sec" data-act="editprofile">${M[S.me].name} 프로필 수정</button></div>` : ''}`);
 }
 /* ---------- profiles ---------- */
 const profileOf = id => ((S.profiles || {})[id]) || {};
 const fmtBirthday = b => b ? `${Number(b.slice(0, 2))}월 ${Number(b.slice(3, 5))}일` : '';
-/* KakaoTalk reminders: back from Kakao login (?kakao=ok|cancel|fail) */
-function kakaoReturn() {
-  const r = new URLSearchParams(location.search).get('kakao');
-  if (!r) return;
-  history.replaceState(null, '', location.pathname);
-  toast(r === 'ok' ? '카톡 알림을 연결했어요. 나와의 채팅을 확인해 보세요' : r === 'cancel' ? '카톡 연결을 취소했어요' : '카톡 연결에 실패했어요. 다시 해볼래요?');
-}
-const kakaoOn = id => (S.kakao || []).includes(id);
 function sheetProfile(id) {
   const x = M[id], p = profileOf(id), mine = id === S.me, unset = '<span class="unset">아직 안 적었어요</span>';
   const bd = p.birthday ? fmtBirthday(p.birthday) : `${x.bday}월 <span class="unset">· 날짜는 아직</span>`;
@@ -1082,12 +1028,8 @@ function sheetProfile(id) {
     <dl class="prof-list">
       <div><dt>생일</dt><dd>${bd}${bdayLevel(x) === 'on' ? ' 🎂' : ''}</dd></div>
       <div><dt>한 줄 소개</dt><dd>${p.bio ? esc(p.bio) : unset}</dd></div>
-      ${S.features && S.features.kakao ? `<div><dt>카톡 알림</dt><dd>${kakaoOn(id) ? '받고 있어요 🔔' : '<span class="unset">안 받고 있어요</span>'}</dd></div>` : ''}
     </dl>
-    ${mine && S.features && S.features.kakao ? `<p class="kk-note">모이는 날 한 달·일주일·3일·하루 전에 카톡 '나와의 채팅'으로 알려드려요.</p>` : ''}
-    ${mine ? `<div class="btns">${S.features && S.features.kakao ? (kakaoOn(id)
-      ? `<button class="btn plain" data-act="kakaooff">카톡 알림 끄기</button>`
-      : `<button class="btn kakao" data-act="kakaoon">카카오톡으로 알림 받기</button>`) : ''}<button class="btn sec" data-act="editprofile">내 프로필 수정</button></div>` : ''}`);
+    ${mine ? `<div class="btns"><button class="btn sec" data-act="editprofile">내 프로필 수정</button></div>` : ''}`);
 }
 function sheetProfileEdit() {
   const id = S.me, x = M[id], p = profileOf(id);
@@ -1134,32 +1076,30 @@ function sheetConfirm(k) {
     <div class="row-btns"><button class="btn plain" data-act="close">취소</button><button class="btn pri" data-act="conf" data-v="${k}">확정하기</button></div>`);
 }
 function sheetPlan(id) {
-  const m = byId(id);
+  const m = byId(id), log = (m.log || []).slice(-5).reverse();
   const quick = [['12:00', '점심 12시'], ['13:00', '오후 1시'], ['14:00', '오후 2시'], ['15:00', '오후 3시']];
-  openSheet(`<h2>시간·장소·코스</h2><p class="sub">${fmtY(m.confirmed)} · 식구 모두가 보고 바꿀 수 있어요.</p>
+  openSheet(`<h2>시간·장소</h2><p class="sub">${fmtY(m.confirmed)} · 식구 모두가 보고 바꿀 수 있어요.</p>
     <form id="pf" novalidate>
       <div class="field"><label for="pl-time">만나는 시간</label><input id="pl-time" type="time" value="${m.time || ''}">
         <div class="qt">${quick.map(([v, t]) => `<button type="button" class="chipbtn" data-act="settime" data-v="${v}">${t}</button>`).join('')}</div></div>
       <div class="field"><label for="pl-place">만나는 장소</label><input id="pl-place" maxlength="40" placeholder="예: 성수역 3번 출구" value="${esc(m.place || '')}" autocomplete="off"></div>
-      <div class="field"><label for="pl-course">코스 <span class="hint-in">한 줄에 하나씩 · 최대 8곳</span></label><textarea id="pl-course" rows="4" maxlength="330" placeholder="예:&#10;점심 - 소금집&#10;카페 - 어니언&#10;산책 - 서울숲">${esc(m.course || '')}</textarea></div>
       <div class="row-btns"><button type="button" class="btn plain" data-act="close">취소</button><button type="submit" class="btn pri">저장하기</button></div>
-    </form>`);
+    </form>
+    ${log.length ? `<div class="grp"><div class="grp-t">바뀐 기록</div><ul class="log">${log.map(l => `<li>${av(l.by, 'sm')}<span class="lx">${M[l.by].name} · ${esc(l.text)}</span><span class="lt">${stamp(l.at)}</span></li>`).join('')}</ul></div>` : ''}`);
   document.getElementById('pf').addEventListener('submit', e => { e.preventDefault(); savePlan(id); });
 }
 function savePlan(id) {
   const m = byId(id), time = document.getElementById('pl-time').value, place = document.getElementById('pl-place').value.trim();
-  const course = document.getElementById('pl-course').value.split('\n').map(x => x.trim().slice(0, 40)).filter(Boolean).slice(0, 8).join('\n');
-  if (time === (m.time || '') && place === (m.place || '') && course === (m.course || '')) { closeSheet(); return; }
+  if (time === (m.time || '') && place === (m.place || '')) { closeSheet(); return; }
   const parts = [];
-  if (course !== (m.course || '')) parts.push(course ? '코스 수정' : '코스 지움');
   if (time !== (m.time || '')) parts.push(time ? `시간 ${fmtTime(time)}` : '시간 지움');
   if (place !== (m.place || '')) parts.push(place ? `장소 ${place}` : '장소 지움');
   const text = parts.join(' · ');
-  commit({ type: 'plan', mid: m.id, by: S.me, time, place, course, text }, () => {
+  commit({ type: 'plan', mid: m.id, by: S.me, time, place, text }, () => {
     const n = new Date();
     (m.log || (m.log = [])).push({ by: S.me, at: `${toKey(n)}T${pad(n.getHours())}:${pad(n.getMinutes())}`, text });
-    m.time = time; m.place = place; m.course = course;
-  }).then(ok => { if (ok) { closeSheet(); render(); toast('일정을 저장했어요'); } });
+    m.time = time; m.place = place;
+  }).then(ok => { if (ok) { closeSheet(); render(); toast('시간·장소를 저장했어요'); } });
 }
 function openPlan(id) { if (!S.me) { pendingAfterPick = 'plan:' + id; sheetWho(); } else sheetPlan(id); }
 function sheetLeave() {
@@ -1260,7 +1200,7 @@ document.addEventListener('submit', async e => {
   if (ok) { render(); toast('후기를 남겼어요'); }
 });
 document.addEventListener('input', e => {
-  if (e.target.id === 'rv-in') { const t = e.target; t.style.height = 'auto'; t.style.height = Math.max(44, Math.min(t.scrollHeight, 140)) + 'px'; t.style.overflowY = t.scrollHeight > 140 ? 'auto' : 'hidden'; }
+  if (e.target.id === 'rv-in') { e.target.style.height = 'auto'; e.target.style.height = Math.min(e.target.scrollHeight, 140) + 'px'; }
 });
 function sheetCmtDel(mid, cid) {
   openSheet(`<h2>이 후기를 지울까요?</h2><p class="sub">지운 후기는 되돌릴 수 없어요.</p>
@@ -1323,9 +1263,7 @@ document.addEventListener('click', e => {
     case 'drop': closeSheet(); go('home'); break;
     case 'who': pendingAfterPick = null; sheetWho(); break;
     case 'enter': if (!S.me) { pendingAfterPick = 'input'; sheetWho(); } else startInput(); break;
-    case 'pickme': if (!S.me) sheetWhoConfirm(v); break;
-    case 'pickme-ok':
-      if (S.me) { closeSheet(); break; }
+    case 'pickme':
       S.me = v; save(); closeSheet(); toast(`${ro(M[v].name)} 들어왔어요`);
       if (pendingAfterPick === 'input') { pendingAfterPick = null; startInput(); }
       else if (pendingAfterPick && pendingAfterPick.startsWith('photo:')) { const id = pendingAfterPick.slice(6); pendingAfterPick = null; render(); pickPhoto(id); }
@@ -1375,8 +1313,6 @@ document.addEventListener('click', e => {
       break;
     }
     case 'profile': sheetProfile(v); break;
-    case 'kakaoon': if (S.me) location.href = `/api/kakao-login?member=${encodeURIComponent(S.me)}`; break;
-    case 'kakaooff': commit({ type: 'kakaooff', member: S.me }, () => {}).then(ok => { if (ok) { toast('카톡 알림을 껐어요'); sheetProfile(S.me); } }); break;
     case 'editprofile': if (!S.me) { pendingAfterPick = null; sheetWho(); } else sheetProfileEdit(); break;
     case 'theme': {
       const next = isDark() ? 'light' : 'dark';

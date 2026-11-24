@@ -22,7 +22,7 @@ async function apply(op) {
   const meetings = await readMeetings();
   const list = Object.values(meetings);
   const m = op.mid ? meetings[op.mid] : null;
-  if (!['create', 'record', 'profile', 'kakaooff'].includes(op.type)) need(m, '모임을 찾을 수 없어요. 새로고침해 주세요.');
+  if (!['create', 'record', 'profile'].includes(op.type)) need(m, '모임을 찾을 수 없어요. 새로고침해 주세요.');
   if ('member' in op || 'by' in op) need(MEMBERS.includes(op.member ?? op.by), '누구인지 먼저 골라주세요.');
 
   switch (op.type) {
@@ -110,16 +110,8 @@ async function apply(op) {
     case 'plan': {
       const time = clean(op.time, 5), place = clean(op.place, 40);
       need(!time || TIME.test(time), '시간을 다시 골라주세요.');
-      // course: one stop per line (max 8 stops); pages that don't send it keep the current course
-      const course = op.course === undefined ? (m.course || '')
-        : String(op.course).split('\n').map(x => x.trim().slice(0, 40)).filter(Boolean).slice(0, 8).join('\n');
       const log = [...(m.log || []), { by: op.by, at: nowKST(), text: clean(op.text, 80) }].slice(-30);
-      await pipeline([saveMeeting({ ...m, time, place, course, log })]);
-      return {};
-    }
-    case 'kakaooff': {
-      // Stop KakaoTalk reminders for this member (forget their Kakao tokens).
-      await redis('HDEL', 'kakao', op.member);
+      await pipeline([saveMeeting({ ...m, time, place, log })]);
       return {};
     }
     case 'comment': {
