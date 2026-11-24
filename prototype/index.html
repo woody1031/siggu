@@ -28,6 +28,7 @@
    radius r1 4 / r2 8 / r3 12 / r4 16 / r6 24, bold action buttons. Token names below are this page's own;
    the comment after each value names the SEED token it comes from. */
 :root{
+  --sea-winter:#E3F0FF; --sea-spring:#FFE9F0; --sea-summer:#DFF6EC; --sea-autumn:#F6EEDF; --plan-line:#FFB27F;
   --bg:#F3F4F5;            /* bg-layer-basement */
   --surface:#FFFFFF;       /* bg-layer-default */
   --floating:#FFFFFF;      /* bg-layer-floating */
@@ -62,6 +63,7 @@
   --f-body:-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Pretendard Variable",Pretendard,"Segoe UI",Roboto,"Helvetica Neue",Arial,"Noto Sans",sans-serif,"Apple Color Emoji","Segoe UI Emoji","Segoe UI Symbol";
 }
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --sea-winter:#13233A; --sea-spring:#33202A; --sea-summer:#122E27; --sea-autumn:#2E281E; --plan-line:#9A4A14;
   --bg:#000000; --surface:#16171B; --floating:#1D2025; --ink:#F3F4F5; --muted:#DCDEE3; --subtle:#B0B3BA;
   --muted-bg:#2B2E35; --muted-bg-pressed:#393D46; --pressed:rgba(255,255,255,.05);
   --line:#2B2E35; --line-muted:rgba(255,255,255,.09); --line-strong:#393D46; --ring:#1E82EB;
@@ -77,6 +79,7 @@
   --shadow-s1:0 1px 4px rgba(0,0,0,.5); --shadow-s2:0 2px 10px rgba(0,0,0,.68); --shadow-lg:0 4px 16px rgba(0,0,0,.8);
   color-scheme:dark}}
 :root[data-theme="dark"]{
+  --sea-winter:#13233A; --sea-spring:#33202A; --sea-summer:#122E27; --sea-autumn:#2E281E; --plan-line:#9A4A14;
   --bg:#000000; --surface:#16171B; --floating:#1D2025; --ink:#F3F4F5; --muted:#DCDEE3; --subtle:#B0B3BA;
   --muted-bg:#2B2E35; --muted-bg-pressed:#393D46; --pressed:rgba(255,255,255,.05);
   --line:#2B2E35; --line-muted:rgba(255,255,255,.09); --line-strong:#393D46; --ring:#1E82EB;
@@ -208,6 +211,16 @@ h1,h2,h3{text-wrap:balance}
 .danger-zone{margin-top:32px;padding-top:20px;border-top:1px solid var(--line);display:grid;gap:12px}
 .danger-zone p{margin:0;font-size:13px;color:var(--muted)}
 .edit-chip{margin-left:auto;height:28px;padding:0 10px;font-size:12px}
+.card.season{position:relative;overflow:hidden;background:linear-gradient(180deg,var(--sea) 0,var(--surface) 210px)}
+.card.season > :not(.fall){position:relative}
+.s-winter{--sea:var(--sea-winter)} .s-spring{--sea:var(--sea-spring)} .s-summer{--sea:var(--sea-summer)} .s-autumn{--sea:var(--sea-autumn)}
+.card.season .plan{border-color:var(--plan-line)}
+.fall{position:absolute;inset:0 0 auto 0;height:210px;pointer-events:none;overflow:hidden}
+.fall i{position:absolute;top:-14px;left:var(--x);width:var(--s);height:var(--s);opacity:0;animation:fall var(--d) linear var(--w) infinite}
+.fall .flake{border-radius:50%;background:#fff;box-shadow:0 0 3px rgba(120,160,210,.35)}
+.fall .petal{width:var(--s);height:calc(var(--s) * .75);border-radius:100% 0 100% 0;background:linear-gradient(135deg,#FFC6D6,#FF9DB8);animation-name:petal}
+@keyframes fall{0%{transform:translate(0,0);opacity:0}12%{opacity:var(--o)}50%{transform:translate(10px,105px)}80%{opacity:var(--o)}100%{transform:translate(-6px,215px);opacity:0}}
+@keyframes petal{0%{transform:translate(0,0) rotate(var(--r));opacity:0}12%{opacity:var(--o)}35%{transform:translate(16px,75px) rotate(calc(var(--r) + 120deg))}70%{transform:translate(-10px,150px) rotate(calc(var(--r) + 230deg))}85%{opacity:var(--o)}100%{transform:translate(8px,215px) rotate(calc(var(--r) + 320deg));opacity:0}}
 .btn.danger{background:transparent;color:var(--muted)}
 .btn.danger:hover{background:var(--muted-bg);color:var(--ink)}
 .btn:active,.pick:active,.rec:active{transform:scale(.99)}
@@ -280,7 +293,8 @@ h1,h2,h3{text-wrap:balance}
 .rv-form textarea{flex:1;min-width:0;height:44px;resize:none;border:0;box-shadow:inset 0 0 0 1px var(--line-strong);border-radius:var(--radius);padding:11px 14px;font:inherit;font-size:16px;line-height:1.4;max-height:140px;background:var(--surface);color:var(--ink)}
 .rv-form textarea::placeholder{color:var(--subtle)}
 .rv-form textarea:focus{outline:none;box-shadow:inset 0 0 0 2px var(--ink)}
-.rv-send{height:44px;padding:0 16px;font-size:15px;flex:none}
+.rv-form .rv-send{height:44px;min-height:44px;padding:0 16px;font-size:15px;flex:none;border-radius:var(--radius)}
+.rv-form textarea{overflow-y:hidden}
 .cnt-sm{color:var(--primary);font-weight:700;margin-left:2px}
 .photo-add{width:100%;margin-top:10px;gap:6px}
 .photo-add svg{width:18px;height:18px}
@@ -545,6 +559,8 @@ body{letter-spacing:-.01em}
 
 @media (prefers-reduced-motion: reduce){*{transition:none!important;animation:none!important}
   /* exception: the small 14px character drop still plays (owner's choice) */
+  .fall .flake{animation:fall var(--d) linear var(--w) infinite!important}
+  .fall .petal{animation:petal var(--d) linear var(--w) infinite!important}
   .members.intro .fig .char{animation:drop .34s cubic-bezier(.25,.8,.35,1) both!important;animation-delay:calc(60ms + var(--i, 0) * 70ms)!important}
   .members.intro .fig.bday-on .burst i{animation:pop .9s cubic-bezier(.15,.7,.3,1) both!important;animation-delay:calc(400ms + var(--i, 0) * 70ms + var(--j, 0) * 25ms)!important}
   .prof .fig.bday-on .burst i{animation:pop .9s cubic-bezier(.15,.7,.3,1) both!important;animation-delay:calc(250ms + var(--j, 0) * 25ms)!important}
@@ -843,6 +859,14 @@ function vEmpty() {
   <div class="empty">모임을 마치면 여기에 해마다 기록이 쌓여요.</div>
   ${footer()}`;
 }
+/* 확정된 모임 카드: 모이는 달의 계절 배경 — 겨울 하늘색+눈, 봄 연핑크+벚꽃잎, 여름 연민트, 가을 연베이지 */
+const season = k => ['winter', 'winter', 'spring', 'spring', 'spring', 'summer', 'summer', 'summer', 'autumn', 'autumn', 'autumn', 'winter'][parse(k).getMonth()];
+function fall(se) {
+  const kind = se === 'winter' ? 'flake' : se === 'spring' ? 'petal' : '';
+  if (!kind) return '';
+  return `<div class="fall" aria-hidden="true">${Array.from({ length: kind === 'flake' ? 16 : 12 }, (_, i) =>
+    `<i class="${kind}" style="--x:${(i * 37 + 11) % 100}%;--s:${(kind === 'flake' ? 4 : 8) + (i * 7) % 5}px;--d:${(kind === 'flake' ? 5 : 6) + (i * 13) % 5}s;--w:${-((i * 29) % 60) / 10}s;--o:${(0.55 + ((i * 17) % 40) / 100).toFixed(2)};--r:${(i * 47) % 360}deg"></i>`).join('')}</div>`;
+}
 function vHome() {
   if (!cur()) return vEmpty();
   const m = cur(), ent = entered(m), top = ranking(m)[0], meIn = S.me;
@@ -854,7 +878,8 @@ function vHome() {
     <h1 class="logo"><span class="logo-mark" role="img" aria-label="SIG·GU 식구"></span></h1>
     <div class="hdr-actions">${themeBtn()}<button class="me-chip" data-act="who">${meIn ? `${av(meIn, 'sm')}<span><b>${M[meIn].name}</b> · 바꾸기</span>` : '<span>누구세요? <b>선택하기</b></span>'}</button></div>
   </header>
-  <article class="card">
+  <article class="card${m.confirmed ? ` season s-${season(m.confirmed)}` : ''}">
+    ${m.confirmed ? fall(season(m.confirmed)) : ''}
     <div class="eyebrow">${label(m)} ${stagePill(m)}<button class="chipbtn edit-chip" data-act="edit" data-v="${m.id}">수정</button></div>
     <h2 class="h2">${esc(m.title)}</h2>
     ${m.confirmed ? `<p class="range sub-msg">${esc(subMsg(m))}</p>` : `<p class="range">후보 ${fmt(m.start)} ~ ${fmt(m.end)}</p>`}
@@ -1200,7 +1225,7 @@ document.addEventListener('submit', async e => {
   if (ok) { render(); toast('후기를 남겼어요'); }
 });
 document.addEventListener('input', e => {
-  if (e.target.id === 'rv-in') { e.target.style.height = 'auto'; e.target.style.height = Math.min(e.target.scrollHeight, 140) + 'px'; }
+  if (e.target.id === 'rv-in') { e.target.style.height = 'auto'; e.target.style.height = Math.min(e.target.scrollHeight, 140) + 'px'; e.target.style.overflowY = e.target.scrollHeight > 140 ? 'auto' : 'hidden'; }
 });
 function sheetCmtDel(mid, cid) {
   openSheet(`<h2>이 후기를 지울까요?</h2><p class="sub">지운 후기는 되돌릴 수 없어요.</p>
