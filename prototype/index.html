@@ -280,7 +280,8 @@ h1,h2,h3{text-wrap:balance}
 .rv-form textarea{flex:1;min-width:0;height:44px;resize:none;border:0;box-shadow:inset 0 0 0 1px var(--line-strong);border-radius:var(--radius);padding:11px 14px;font:inherit;font-size:16px;line-height:1.4;max-height:140px;background:var(--surface);color:var(--ink)}
 .rv-form textarea::placeholder{color:var(--subtle)}
 .rv-form textarea:focus{outline:none;box-shadow:inset 0 0 0 2px var(--ink)}
-.rv-send{height:44px;padding:0 16px;font-size:15px;flex:none}
+.rv-form .rv-send{height:44px;padding:0 16px;font-size:15px;border-radius:var(--radius);flex:none}
+.rv-form textarea{overflow-y:hidden}
 .cnt-sm{color:var(--primary);font-weight:700;margin-left:2px}
 .photo-add{width:100%;margin-top:10px;gap:6px}
 .photo-add svg{width:18px;height:18px}
@@ -793,7 +794,6 @@ function planBlock(m, withYear) {
     <div class="plan-b">
       <div class="pl-row"><span class="pl-k">시간</span><span class="pl-v ${m.time ? '' : 'unset'}">${m.time ? fmtTime(m.time) : '아직 안 정했어요'}</span></div>
       <div class="pl-row"><span class="pl-k">장소</span><span class="pl-v ${m.place ? '' : 'unset'}">${m.place ? esc(m.place) : '아직 안 정했어요'}</span></div>
-      ${last ? `<div class="pl-by">${ga(M[last.by].name)} ${stamp(last.at)}에 마지막으로 바꿨어요</div>` : ''}
     </div>
     <div class="plan-btns">
       <button class="btn ${has ? 'plain' : 'pri'}" data-act="plan" data-v="${m.id}">${has ? '시간·장소 바꾸기' : '시간·장소 정하기'}</button>
@@ -823,7 +823,7 @@ function calendar(m, cell) {
 const footer = () => MODE !== 'local' ? '' : `<footer class="foot"><span>프로토타입 · 이 폰에만 저장돼요</span><span><button class="linkbtn" data-act="reset">예시 데이터 보기</button> · <button class="linkbtn" data-act="wipe">처음 상태로 비우기</button></span></footer>`;
 const brand = () => `<header class="brand">
     <h1 class="logo"><span class="logo-mark" role="img" aria-label="SIG·GU 식구"></span></h1>
-    <div class="hdr-actions">${themeBtn()}<button class="me-chip" data-act="who">${S.me ? `${av(S.me, 'sm')}<span><b>${M[S.me].name}</b> · 바꾸기</span>` : '<span>누구세요? <b>선택하기</b></span>'}</button></div>
+    <div class="hdr-actions">${themeBtn()}<button class="me-chip" ${S.me ? `data-act="profile" data-v="${S.me}"` : 'data-act="who"'}>${S.me ? `${av(S.me, 'sm')}<span><b>${M[S.me].name}</b></span>` : '<span>누구세요? <b>선택하기</b></span>'}</button></div>
   </header>`;
 function vEmpty() {
   return `${brand()}
@@ -852,7 +852,7 @@ function vHome() {
   return `
   <header class="brand">
     <h1 class="logo"><span class="logo-mark" role="img" aria-label="SIG·GU 식구"></span></h1>
-    <div class="hdr-actions">${themeBtn()}<button class="me-chip" data-act="who">${meIn ? `${av(meIn, 'sm')}<span><b>${M[meIn].name}</b> · 바꾸기</span>` : '<span>누구세요? <b>선택하기</b></span>'}</button></div>
+    <div class="hdr-actions">${themeBtn()}<button class="me-chip" ${meIn ? `data-act="profile" data-v="${meIn}"` : 'data-act="who"'}>${meIn ? `${av(meIn, 'sm')}<span><b>${M[meIn].name}</b></span>` : '<span>누구세요? <b>선택하기</b></span>'}</button></div>
   </header>
   <article class="card">
     <div class="eyebrow">${label(m)} ${stagePill(m)}<button class="chipbtn edit-chip" data-act="edit" data-v="${m.id}">수정</button></div>
@@ -1014,9 +1014,13 @@ document.addEventListener('keydown', e => {
 
 /* ---------- sheets ---------- */
 function sheetWho() {
-  openSheet(`<h2>누구세요?</h2><p class="sub">한 번 고르면 이 폰에서 기억해요.</p>
-  <div class="who-grid">${MEMBERS.map(x => `<button class="pickme ${S.me === x.id ? 'on' : ''}" data-act="pickme" data-v="${x.id}">${av(x.id, 'lg')}${x.name}</button>`).join('')}</div>
-  ${S.me ? `<div class="btns"><button class="btn sec" data-act="editprofile">${M[S.me].name} 프로필 수정</button></div>` : ''}`);
+  if (S.me) { sheetProfile(S.me); return; } /* chosen once per phone */
+  openSheet(`<h2>누구세요?</h2><p class="sub">한 번 고르면 이 폰에서는 바꿀 수 없어요.</p>
+  <div class="who-grid">${MEMBERS.map(x => `<button class="pickme" data-act="pickme" data-v="${x.id}">${av(x.id, 'lg')}${x.name}</button>`).join('')}</div>`);
+}
+function sheetWhoConfirm(id) {
+  openSheet(`<div class="prof">${figure(M[id], true, M[id].name)}<h2>${esc(M[id].name)}${hasBatchim(M[id].name) ? '이' : ''} 맞나요?</h2><p class="sub">한 번 정하면 이 폰에서는 다른 사람으로 바꿀 수 없어요.</p></div>
+    <div class="row-btns"><button class="btn plain" data-act="who">다시 고르기</button><button class="btn pri" data-act="pickme-ok" data-v="${id}">맞아요</button></div>`);
 }
 /* ---------- profiles ---------- */
 const profileOf = id => ((S.profiles || {})[id]) || {};
@@ -1200,7 +1204,7 @@ document.addEventListener('submit', async e => {
   if (ok) { render(); toast('후기를 남겼어요'); }
 });
 document.addEventListener('input', e => {
-  if (e.target.id === 'rv-in') { e.target.style.height = 'auto'; e.target.style.height = Math.min(e.target.scrollHeight, 140) + 'px'; }
+  if (e.target.id === 'rv-in') { const t = e.target; t.style.height = 'auto'; t.style.height = Math.max(44, Math.min(t.scrollHeight, 140)) + 'px'; t.style.overflowY = t.scrollHeight > 140 ? 'auto' : 'hidden'; }
 });
 function sheetCmtDel(mid, cid) {
   openSheet(`<h2>이 후기를 지울까요?</h2><p class="sub">지운 후기는 되돌릴 수 없어요.</p>
@@ -1263,7 +1267,9 @@ document.addEventListener('click', e => {
     case 'drop': closeSheet(); go('home'); break;
     case 'who': pendingAfterPick = null; sheetWho(); break;
     case 'enter': if (!S.me) { pendingAfterPick = 'input'; sheetWho(); } else startInput(); break;
-    case 'pickme':
+    case 'pickme': if (!S.me) sheetWhoConfirm(v); break;
+    case 'pickme-ok':
+      if (S.me) { closeSheet(); break; }
       S.me = v; save(); closeSheet(); toast(`${ro(M[v].name)} 들어왔어요`);
       if (pendingAfterPick === 'input') { pendingAfterPick = null; startInput(); }
       else if (pendingAfterPick && pendingAfterPick.startsWith('photo:')) { const id = pendingAfterPick.slice(6); pendingAfterPick = null; render(); pickPhoto(id); }
