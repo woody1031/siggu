@@ -44,7 +44,7 @@
   --primary:#FF6600; --primary-pressed:#E14D00; --primary-fg:#FFFFFF;   /* bg-brand-solid(+pressed), fg-on-brand-solid */
   --brand-weak:#FFF2EC; --brand-weak-fg:#E14D00;                          /* bg-brand-weak, fg-brand-contrast */
   --destructive:#FA342C; --destructive-weak:#FDF0F0; --destructive-line:#FED4D2; /* critical solid / weak / stroke-weak */
-  --success:#079171; --success-bg:#EDFAF6;                                /* positive */
+  --success:#079171; --success-bg:#E3F6EF; --success-ink:#046B54;                                /* positive */
   --accent:#079171; --accent-ink:#FFFFFF; --accent-soft:#EDFAF6;
   --neutral-solid:#555D6D; --neutral-solid-fg:#FFFFFF;                    /* badge neutral solid */
   --inverted:#2A3038; --inverted-fg:#FFFFFF;                              /* bg-neutral-inverted (snackbar) */
@@ -67,7 +67,7 @@
   --line:#2B2E35; --line-muted:rgba(255,255,255,.09); --line-strong:#393D46; --ring:#1E82EB;
   --primary:#FF6600; --primary-pressed:#FF9E65; --primary-fg:#FFFFFF; --brand-weak:#31241F; --brand-weak-fg:#FF6600;
   --destructive:#FF6E60; --destructive-weak:#322323; --destructive-line:#742826;
-  --success:#22B27F; --success-bg:#202926; --accent:#22B27F; --accent-ink:#FFFFFF; --accent-soft:#202926;
+  --success:#22B27F; --success-bg:#1C3A2F; --success-ink:#5FD3A6; --accent:#22B27F; --accent-ink:#FFFFFF; --accent-soft:#202926;
   --neutral-solid:#DCDEE3; --neutral-solid-fg:#16171B; --inverted:#F3F4F5; --inverted-fg:#16171B;
   --heat0:#1D2025; --heat1:#31241F; --heat2:#4B291C; --heat3:#6B311C; --heat4:#BD4201; --heat5:#FF6600; --heat-hi-ink:#FFFFFF;
   --holiday:#FF6E60; --sat:#41A2F9; --warn-bg:#302819; --warn-ink:#CA901C; --warn-line:#543E15;
@@ -82,7 +82,7 @@
   --line:#2B2E35; --line-muted:rgba(255,255,255,.09); --line-strong:#393D46; --ring:#1E82EB;
   --primary:#FF6600; --primary-pressed:#FF9E65; --primary-fg:#FFFFFF; --brand-weak:#31241F; --brand-weak-fg:#FF6600;
   --destructive:#FF6E60; --destructive-weak:#322323; --destructive-line:#742826;
-  --success:#22B27F; --success-bg:#202926; --accent:#22B27F; --accent-ink:#FFFFFF; --accent-soft:#202926;
+  --success:#22B27F; --success-bg:#1C3A2F; --success-ink:#5FD3A6; --accent:#22B27F; --accent-ink:#FFFFFF; --accent-soft:#202926;
   --neutral-solid:#DCDEE3; --neutral-solid-fg:#16171B; --inverted:#F3F4F5; --inverted-fg:#16171B;
   --heat0:#1D2025; --heat1:#31241F; --heat2:#4B291C; --heat3:#6B311C; --heat4:#BD4201; --heat5:#FF6600; --heat-hi-ink:#FFFFFF;
   --holiday:#FF6E60; --sat:#41A2F9; --warn-bg:#302819; --warn-ink:#CA901C; --warn-line:#543E15;
@@ -482,7 +482,7 @@ body{letter-spacing:-.01em}
 .pill{border:0;border-radius:var(--radius-sm);padding:3px 6px;font-size:12px;line-height:16px;font-weight:700;gap:0}
 .pill::before{display:none!important}
 .pill.st-voting{background:var(--brand-weak);color:var(--brand-weak-fg)}
-.pill.st-confirmed{background:var(--success);color:#fff}
+.pill.st-confirmed{background:var(--success-bg);color:var(--success-ink)}
 .pill.st-over{background:var(--neutral-solid);color:var(--neutral-solid-fg)}
 .pill.st-ended{background:var(--muted-bg);color:var(--muted);font-weight:500}
 
