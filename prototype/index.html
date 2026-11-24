@@ -244,6 +244,13 @@ h1,h2,h3{text-wrap:balance}
 .plan-btns{display:flex;gap:8px;padding:0 14px 14px}
 .plan-btns .btn{flex:1;height:36px;font-size:13px}
 .qt{display:flex;gap:6px;flex-wrap:wrap}
+.tw{position:relative}
+.field .tw input[type=time]{-webkit-appearance:none;appearance:none;text-align:left;min-height:52px}
+.tw input[type=time]::-webkit-date-and-time-value{text-align:left;min-height:1.2em}
+.tw .ph{position:absolute;left:16px;top:50%;transform:translateY(-50%);color:var(--subtle);font-size:16px;pointer-events:none;display:none}
+.tw.noval .ph{display:block}
+.tw.noval input:not(:focus)::-webkit-datetime-edit{color:transparent}
+.tw.noval input:focus + .ph{display:none}
 .log{list-style:none;margin:8px 0 0;padding:0;display:grid;gap:8px}
 .log li{display:flex;gap:8px;align-items:center;font-size:13px}
 .log .lt{color:var(--muted);font-size:12px;white-space:nowrap;margin-left:auto;font-variant-numeric:tabular-nums}
@@ -1029,6 +1036,9 @@ const go = v => { if (v === 'home' && view !== 'home') introDone = false; view =
 
 function toast(t) { $toast.textContent = t; $toast.classList.add('show'); clearTimeout(toast.t); toast.t = setTimeout(() => $toast.classList.remove('show'), 1900); }
 let sheetTimer = null;
+/* iPhone shows an empty time field as a blank gap: draw our own box and hint */
+function syncTime() { const t = document.getElementById('pl-time'); if (t) t.parentNode.classList.toggle('noval', !t.value); }
+['input', 'change'].forEach(ev => document.addEventListener(ev, e => { if (e.target.id === 'pl-time') syncTime(); }));
 function openSheet(html) { clearTimeout(sheetTimer); $sheet.innerHTML = '<div class="grab"></div>' + html; $scrim.hidden = false; requestAnimationFrame(() => $scrim.classList.add('open')); }
 function closeSheet() { $scrim.classList.remove('open'); clearTimeout(sheetTimer); sheetTimer = setTimeout(() => { $scrim.hidden = true; }, 200); }
 $scrim.addEventListener('click', e => { if (e.target === $scrim) closeSheet(); });
@@ -1105,7 +1115,7 @@ function sheetPlan(id) {
   const quick = [['12:00', '점심 12시'], ['13:00', '오후 1시'], ['14:00', '오후 2시'], ['15:00', '오후 3시']];
   openSheet(`<h2>시간·장소</h2><p class="sub">${fmtY(m.confirmed)} · 식구 모두가 보고 바꿀 수 있어요.</p>
     <form id="pf" novalidate>
-      <div class="field"><label for="pl-time">만나는 시간</label><input id="pl-time" type="time" value="${m.time || ''}">
+      <div class="field"><label for="pl-time">만나는 시간</label><div class="tw ${m.time ? '' : 'noval'}"><input id="pl-time" type="time" value="${m.time || ''}"><span class="ph" aria-hidden="true">시간을 골라주세요</span></div>
         <div class="qt">${quick.map(([v, t]) => `<button type="button" class="chipbtn" data-act="settime" data-v="${v}">${t}</button>`).join('')}</div></div>
       <div class="field"><label for="pl-place">만나는 장소</label><input id="pl-place" maxlength="40" placeholder="예: 성수역 3번 출구" value="${esc(m.place || '')}" autocomplete="off"></div>
       <div class="row-btns"><button type="button" class="btn plain" data-act="close">취소</button><button type="submit" class="btn pri">저장하기</button></div>
@@ -1295,7 +1305,7 @@ document.addEventListener('click', e => {
       else if (pendingAfterPick && pendingAfterPick.startsWith('plan:')) { const id = pendingAfterPick.slice(5); pendingAfterPick = null; render(); sheetPlan(id); }
       else render(); break;
     case 'plan': openPlan(v); break;
-    case 'settime': document.getElementById('pl-time').value = v; break;
+    case 'settime': document.getElementById('pl-time').value = v; syncTime(); break;
     case 'result': viewMid = v || cur().id; go('result'); break;
     case 'new': editMid = null; go('new'); break;
     case 'edit': editMid = v; go('new'); break;
