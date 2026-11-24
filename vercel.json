@@ -1,5 +1,11 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "outputDirectory": "prototype",
-  "buildCommand": ""
+  "buildCommand": "",
+  "crons": [
+    {
+      "path": "/api/remind",
+      "schedule": "0 0 * * *"
+    }
+  ]
 }

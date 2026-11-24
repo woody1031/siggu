@@ -482,6 +482,9 @@ body{letter-spacing:-.01em}
 .prof h2{display:flex;align-items:center;gap:6px}
 .me-tag{font-size:12px;font-weight:700;padding:2px 6px;border-radius:var(--radius-sm);background:var(--brand-weak);color:var(--brand-weak-fg)}
 .prof .sub{margin-top:2px}
+.btn.kakao{background:#FEE500;color:#191919}
+.btn.kakao:hover{background:#F5DC00}
+.kk-note{margin:12px 2px 0;font-size:13px;color:var(--subtle);line-height:1.5}
 .prof-list{margin:20px 0 0;display:grid;border-top:1px solid var(--line)}
 .prof-list>div{display:grid;grid-template-columns:84px minmax(0,1fr);gap:12px;align-items:center;padding:14px 2px;border-bottom:1px solid var(--line)}
 .prof-list dt{font-size:14px;color:var(--subtle)}
@@ -706,6 +709,7 @@ async function api(op) {
   S.meetings = j.meetings;
   if (j.profiles) S.profiles = j.profiles;
   if (j.features) S.features = j.features;
+  if (j.kakao) S.kakao = j.kakao;
   return j;
 }
 /* Server mode: send the change, then use the state the server returns. Local mode: change here and save. */
@@ -717,11 +721,12 @@ async function commit(op, local) {
 async function boot() {
   try {
     const r = await fetch('/api/state', { cache: 'no-store' });
-    if (r.ok) { const j = await r.json(); MODE = 'server'; S = { me: readMe(), meetings: j.meetings || [], profiles: j.profiles || {}, features: j.features || {} }; }
+    if (r.ok) { const j = await r.json(); MODE = 'server'; S = { me: readMe(), meetings: j.meetings || [], profiles: j.profiles || {}, features: j.features || {}, kakao: j.kakao || [] }; }
     else if (LOCAL_PREVIEW && (r.status === 404 || r.status === 503)) { MODE = 'local'; S = load(); }
     else { MODE = 'error'; bootError = (await r.json().catch(() => ({}))).error || ''; }
   } catch (e) { MODE = LOCAL_PREVIEW ? 'local' : 'error'; if (MODE === 'local') S = load(); }
   render();
+  kakaoReturn();
   if (MODE === 'server') {
     setInterval(refresh, 30000);
     document.addEventListener('visibilitychange', () => { if (!document.hidden) refresh(); });
@@ -735,6 +740,7 @@ async function refresh() {
     const r = await fetch('/api/state', { cache: 'no-store' }); if (!r.ok) return;
     const j = await r.json(), next = JSON.stringify([j.meetings || [], j.profiles || {}]);
     if (next !== JSON.stringify([S.meetings, S.profiles || {}])) { S.meetings = j.meetings || []; S.profiles = j.profiles || {}; S.features = j.features || S.features; render(); }
+    S.kakao = j.kakao || S.kakao;
   } catch (e) {}
 }
 
@@ -1061,6 +1067,14 @@ function sheetWhoConfirm(id) {
 /* ---------- profiles ---------- */
 const profileOf = id => ((S.profiles || {})[id]) || {};
 const fmtBirthday = b => b ? `${Number(b.slice(0, 2))}월 ${Number(b.slice(3, 5))}일` : '';
+/* KakaoTalk reminders: back from Kakao login (?kakao=ok|cancel|fail) */
+function kakaoReturn() {
+  const r = new URLSearchParams(location.search).get('kakao');
+  if (!r) return;
+  history.replaceState(null, '', location.pathname);
+  toast(r === 'ok' ? '카톡 알림을 연결했어요. 나와의 채팅을 확인해 보세요' : r === 'cancel' ? '카톡 연결을 취소했어요' : '카톡 연결에 실패했어요. 다시 해볼래요?');
+}
+const kakaoOn = id => (S.kakao || []).includes(id);
 function sheetProfile(id) {
   const x = M[id], p = profileOf(id), mine = id === S.me, unset = '<span class="unset">아직 안 적었어요</span>';
   const bd = p.birthday ? fmtBirthday(p.birthday) : `${x.bday}월 <span class="unset">· 날짜는 아직</span>`;
@@ -1068,8 +1082,12 @@ function sheetProfile(id) {
     <dl class="prof-list">
       <div><dt>생일</dt><dd>${bd}${bdayLevel(x) === 'on' ? ' 🎂' : ''}</dd></div>
       <div><dt>한 줄 소개</dt><dd>${p.bio ? esc(p.bio) : unset}</dd></div>
+      ${S.features && S.features.kakao ? `<div><dt>카톡 알림</dt><dd>${kakaoOn(id) ? '받고 있어요 🔔' : '<span class="unset">안 받고 있어요</span>'}</dd></div>` : ''}
     </dl>
-    ${mine ? `<div class="btns"><button class="btn sec" data-act="editprofile">내 프로필 수정</button></div>` : ''}`);
+    ${mine && S.features && S.features.kakao ? `<p class="kk-note">모이는 날 한 달·일주일·3일·하루 전에 카톡 '나와의 채팅'으로 알려드려요.</p>` : ''}
+    ${mine ? `<div class="btns">${S.features && S.features.kakao ? (kakaoOn(id)
+      ? `<button class="btn plain" data-act="kakaooff">카톡 알림 끄기</button>`
+      : `<button class="btn kakao" data-act="kakaoon">카카오톡으로 알림 받기</button>`) : ''}<button class="btn sec" data-act="editprofile">내 프로필 수정</button></div>` : ''}`);
 }
 function sheetProfileEdit() {
   const id = S.me, x = M[id], p = profileOf(id);
@@ -1357,6 +1375,8 @@ document.addEventListener('click', e => {
       break;
     }
     case 'profile': sheetProfile(v); break;
+    case 'kakaoon': if (S.me) location.href = `/api/kakao-login?member=${encodeURIComponent(S.me)}`; break;
+    case 'kakaooff': commit({ type: 'kakaooff', member: S.me }, () => {}).then(ok => { if (ok) { toast('카톡 알림을 껐어요'); sheetProfile(S.me); } }); break;
     case 'editprofile': if (!S.me) { pendingAfterPick = null; sheetWho(); } else sheetProfileEdit(); break;
     case 'theme': {
       const next = isDark() ? 'light' : 'dark';

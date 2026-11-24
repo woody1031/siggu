@@ -6,6 +6,7 @@
 //   photo:<meetingId>:<photoId> string  JPEG data URL (up to 10 photos per meeting)
 //   photo:<meetingId>     string        older single photo, shown as photo id 'legacy'
 //   profiles          hash  memberId  -> { birthday 'MM-DD', bio, updatedAt } (no phone numbers)
+//   kakao / kstate:* / reminded  KakaoTalk reminders (see _kakao.js)
 //   comments:<meetingId> hash commentId -> { id, by, text, at } (meeting reviews; one field each so writes never collide)
 // Photos uploaded through Vercel Blob keep only their URLs here: url (display), thumb, orig (original file).
 
@@ -47,8 +48,9 @@ export async function readMeetings() {
 export async function readState() {
   const meetings = Object.values(await readMeetings());
   const profiles = Object.fromEntries(Object.entries(pairs(await redis('HGETALL', 'profiles'))).map(([k, v]) => { const { phone, ...p } = JSON.parse(v); return [k, p]; }));
-  const features = { blob: blobEnabled(), maxPhotos: MAX_PHOTOS };
-  if (!meetings.length) return { meetings: [], profiles, features };
+  const kakao = Object.keys(pairs(await redis('HGETALL', 'kakao'))); // who gets KakaoTalk reminders (ids only, never tokens)
+  const features = { blob: blobEnabled(), maxPhotos: MAX_PHOTOS, kakao: Boolean(process.env.KAKAO_REST_KEY) };
+  if (!meetings.length) return { meetings: [], profiles, features, kakao };
   const avails = await pipeline(meetings.flatMap(m => [['HGETALL', `avail:${m.id}`], ['HGETALL', `comments:${m.id}`]]));
   meetings.forEach((m, i) => {
     m.photos = photosOf(m);
@@ -59,7 +61,7 @@ export async function readState() {
     m.avail = Object.fromEntries(Object.entries(a).map(([member, json]) => [member, JSON.parse(json)]));
   });
   meetings.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0) || b.year - a.year || b.round - a.round);
-  return { meetings, profiles, features };
+  return { meetings, profiles, features, kakao };
 }
 
 export const MAX_PHOTOS = 10;
