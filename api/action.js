@@ -110,8 +110,11 @@ async function apply(op) {
     case 'plan': {
       const time = clean(op.time, 5), place = clean(op.place, 40);
       need(!time || TIME.test(time), '시간을 다시 골라주세요.');
+      // course: one stop per line (max 8 stops); pages that don't send it keep the current course
+      const course = op.course === undefined ? (m.course || '')
+        : String(op.course).split('\n').map(x => x.trim().slice(0, 40)).filter(Boolean).slice(0, 8).join('\n');
       const log = [...(m.log || []), { by: op.by, at: nowKST(), text: clean(op.text, 80) }].slice(-30);
-      await pipeline([saveMeeting({ ...m, time, place, log })]);
+      await pipeline([saveMeeting({ ...m, time, place, course, log })]);
       return {};
     }
     case 'comment': {
