@@ -28,6 +28,7 @@
    radius r1 4 / r2 8 / r3 12 / r4 16 / r6 24, bold action buttons. Token names below are this page's own;
    the comment after each value names the SEED token it comes from. */
 :root{
+  --sea-winter:#E3F0FF; --sea-spring:#FFE9F0; --sea-summer:#E0F6EC; --sea-autumn:#FFEFD9; --plan-line:#FFB27F;
   --bg:#F3F4F5;            /* bg-layer-basement */
   --surface:#FFFFFF;       /* bg-layer-default */
   --floating:#FFFFFF;      /* bg-layer-floating */
@@ -62,6 +63,7 @@
   --f-body:-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Pretendard Variable",Pretendard,"Segoe UI",Roboto,"Helvetica Neue",Arial,"Noto Sans",sans-serif,"Apple Color Emoji","Segoe UI Emoji","Segoe UI Symbol";
 }
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --sea-winter:#13233A; --sea-spring:#33202A; --sea-summer:#122E27; --sea-autumn:#33271A; --plan-line:#9A4A14;
   --bg:#000000; --surface:#16171B; --floating:#1D2025; --ink:#F3F4F5; --muted:#DCDEE3; --subtle:#B0B3BA;
   --muted-bg:#2B2E35; --muted-bg-pressed:#393D46; --pressed:rgba(255,255,255,.05);
   --line:#2B2E35; --line-muted:rgba(255,255,255,.09); --line-strong:#393D46; --ring:#1E82EB;
@@ -77,6 +79,7 @@
   --shadow-s1:0 1px 4px rgba(0,0,0,.5); --shadow-s2:0 2px 10px rgba(0,0,0,.68); --shadow-lg:0 4px 16px rgba(0,0,0,.8);
   color-scheme:dark}}
 :root[data-theme="dark"]{
+  --sea-winter:#13233A; --sea-spring:#33202A; --sea-summer:#122E27; --sea-autumn:#33271A; --plan-line:#9A4A14;
   --bg:#000000; --surface:#16171B; --floating:#1D2025; --ink:#F3F4F5; --muted:#DCDEE3; --subtle:#B0B3BA;
   --muted-bg:#2B2E35; --muted-bg-pressed:#393D46; --pressed:rgba(255,255,255,.05);
   --line:#2B2E35; --line-muted:rgba(255,255,255,.09); --line-strong:#393D46; --ring:#1E82EB;
@@ -207,7 +210,16 @@ h1,h2,h3{text-wrap:balance}
 .btn.del-solid{background:var(--destructive);color:#fff}
 .danger-zone{margin-top:32px;padding-top:20px;border-top:1px solid var(--line);display:grid;gap:12px}
 .danger-zone p{margin:0;font-size:13px;color:var(--muted)}
-.edit-chip{margin-left:auto;height:28px;padding:0 10px;font-size:12px}
+.edit-chip{flex:none;height:28px;padding:0 10px;font-size:12px}
+.ttl{display:flex;align-items:center;gap:10px;margin:10px 0 4px}
+.ttl .h2{margin:0;min-width:0}
+.card.season{position:relative;overflow:hidden;background:linear-gradient(180deg,var(--sea) 0,var(--surface) 210px)}
+.card.season > :not(.snow){position:relative}
+.s-winter{--sea:var(--sea-winter)} .s-spring{--sea:var(--sea-spring)} .s-summer{--sea:var(--sea-summer)} .s-autumn{--sea:var(--sea-autumn)}
+.card.season .plan{border-color:var(--plan-line)}
+.snow{position:absolute;inset:0 0 auto 0;height:200px;pointer-events:none;overflow:hidden}
+.snow i{position:absolute;top:-10px;left:var(--x);width:var(--s);height:var(--s);border-radius:50%;background:#fff;opacity:0;box-shadow:0 0 3px rgba(120,160,210,.35);animation:snow var(--d) linear var(--w) infinite}
+@keyframes snow{0%{transform:translate(0,0);opacity:0}12%{opacity:var(--o)}50%{transform:translate(10px,100px)}80%{opacity:var(--o)}100%{transform:translate(-6px,205px);opacity:0}}
 .btn.danger{background:transparent;color:var(--muted)}
 .btn.danger:hover{background:var(--muted-bg);color:var(--ink)}
 .btn:active,.pick:active,.rec:active{transform:scale(.99)}
@@ -554,6 +566,7 @@ body{letter-spacing:-.01em}
 
 @media (prefers-reduced-motion: reduce){*{transition:none!important;animation:none!important}
   /* exception: the small 14px character drop still plays (owner's choice) */
+  .snow i{animation:snow var(--d) linear var(--w) infinite!important}
   .members.intro .fig .char{animation:drop .34s cubic-bezier(.25,.8,.35,1) both!important;animation-delay:calc(60ms + var(--i, 0) * 70ms)!important}
   .members.intro .fig.bday-on .burst i{animation:pop .9s cubic-bezier(.15,.7,.3,1) both!important;animation-delay:calc(400ms + var(--i, 0) * 70ms + var(--j, 0) * 25ms)!important}
   .prof .fig.bday-on .burst i{animation:pop .9s cubic-bezier(.15,.7,.3,1) both!important;animation-delay:calc(250ms + var(--j, 0) * 25ms)!important}
@@ -863,6 +876,10 @@ function vEmpty() {
   <div class="empty">모임을 마치면 여기에 해마다 기록이 쌓여요.</div>
   ${footer()}`;
 }
+/* 확정된 모임 카드: 모이는 달의 계절 배경 (겨울은 눈이 내려요) */
+const season = k => ['winter', 'winter', 'spring', 'spring', 'spring', 'summer', 'summer', 'summer', 'autumn', 'autumn', 'autumn', 'winter'][parse(k).getMonth()];
+const snow = () => `<div class="snow" aria-hidden="true">${Array.from({ length: 16 }, (_, i) =>
+  `<i style="--x:${(i * 37 + 11) % 100}%;--s:${4 + (i * 7) % 5}px;--d:${(5 + (i * 13) % 5).toFixed(1)}s;--w:${-((i * 29) % 60) / 10}s;--o:${(0.55 + ((i * 17) % 40) / 100).toFixed(2)}"></i>`).join('')}</div>`;
 function vHome() {
   if (!cur()) return vEmpty();
   const m = cur(), ent = entered(m), top = ranking(m)[0], meIn = S.me;
@@ -874,9 +891,10 @@ function vHome() {
     <h1 class="logo"><span class="logo-mark" role="img" aria-label="SIG·GU 식구"></span></h1>
     <div class="hdr-actions">${themeBtn()}<button class="me-chip" ${meIn ? `data-act="profile" data-v="${meIn}"` : 'data-act="who"'}>${meIn ? `${av(meIn, 'sm')}<span><b>${M[meIn].name}</b></span>` : '<span>누구세요? <b>선택하기</b></span>'}</button></div>
   </header>
-  <article class="card">
-    <div class="eyebrow">${label(m)} ${stagePill(m)}<button class="chipbtn edit-chip" data-act="edit" data-v="${m.id}">수정</button></div>
-    <h2 class="h2">${esc(m.title)}</h2>
+  <article class="card${m.confirmed ? ` season s-${season(m.confirmed)}` : ''}">
+    ${m.confirmed && season(m.confirmed) === 'winter' ? snow() : ''}
+    <div class="eyebrow">${label(m)} ${stagePill(m)}</div>
+    <div class="ttl"><h2 class="h2">${esc(m.title)}</h2><button class="chipbtn edit-chip" data-act="edit" data-v="${m.id}">수정</button></div>
     ${m.confirmed ? `<p class="range sub-msg">${esc(subMsg(m))}</p>` : `<p class="range">후보 ${fmt(m.start)} ~ ${fmt(m.end)}</p>`}
     ${m.confirmed ? planBlock(m) : ''}
     ${membersOpen()}${MEMBERS.map((x, i) => { const ok = ent.includes(x.id); return `<div class="mem ${x.id === meIn ? 'me' : ''} ${ok ? '' : 'pending'} ${cheers(i) ? 'cheer' : ''}" style="--i:${i}" role="button" tabindex="0" data-act="profile" data-v="${x.id}" aria-label="${x.name} 프로필">${figure(x, ok, x.name + (ok ? '' : ' (아직)'))}<span class="nm">${x.name}</span><span class="st ${ok ? 'ok' : ''}">${ok ? '완료' : '아직'}</span></div>`; }).join('')}</div>
