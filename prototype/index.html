@@ -873,7 +873,7 @@ function vEmpty() {
 }
 /* 확정된 모임 카드: 모이는 달의 계절 배경 — 겨울 하늘색+눈, 봄 연핑크+벚꽃잎, 여름 연민트, 가을 연베이지 */
 /* 확정 카드 오른쪽 위 캐릭터: 모임 달 기준 (그림이 있는 것만) */
-const ART_READY = ['winter-fox', 'spring-koala'];
+const ART_READY = ['winter-fox', 'spring-koala', 'autumn-pigeon', 'lateautumn-dog'];
 function seasonArt(k) {
   const mo = parse(k).getMonth() + 1;
   const f = mo === 12 || mo <= 2 ? 'winter-fox' : mo <= 5 ? 'spring-koala' : mo <= 8 ? 'summer-babsae' : mo <= 10 ? 'autumn-pigeon' : 'lateautumn-dog';
