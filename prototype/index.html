@@ -752,6 +752,20 @@ const wdClass = k => (wday(k) === 0 || hol(k)) ? 'red' : wday(k) === 6 ? 'blue' 
 const backIcon = '<svg viewBox="0 0 24 24" fill="none" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg>';
 const topbar = (t, s = '', act = 'home') => `<header class="topbar"><button class="back" data-act="${act}" aria-label="뒤로">${backIcon}</button><div class="tb"><h1 class="tb-t">${t}</h1>${s ? `<p class="tb-s">${s}</p>` : ''}</div></header>`;
 const label = m => `${m.year}년 ${m.round}회차`;
+/* Line under a confirmed meeting's title: D-day messages first, then a birthday this month, then the meeting month's season. */
+const MONTH_MSG = ['', '식구들 새해복 많이 받아요 ❄️', '아직 추워요, 목도리 꼭 챙겨요 🧣', '환절기 감기 조심, 따뜻하게 입고 만나요 🌱',
+  '벚꽃 지기 전에 식구들 얼굴 봐요 🌸', '바람 좋은 날, 식구들 빨리 만나고 싶어요 🌿', '슬슬 더워져요, 시원한 데서 만나요 🍉',
+  '더위 조심! 물 많이 마시고 만나요 🧊', '여름 가기 전에 한 번 더 모여요 ☀️', '아침저녁 쌀쌀해요, 겉옷 챙겨요 🍂',
+  '단풍처럼 알록달록 즐겁게 만나요 🍁', '환절기 따뜻하게 입고 만나요 🧥', '올해도 수고했어요, 연말에 만나요 🎄'];
+function subMsg(m) {
+  const d = dday(m.confirmed);
+  if (d === 'D-DAY') return '오늘 만나요! 조심히 와요 🚶';
+  if (d === 'D-1') return '내일 만나요! 늦지 않기 ⏰';
+  if (!d) return '즐거웠어요, 후기 남겨줘요 💬';
+  const bday = MEMBERS.filter(x => bdayLevel(x) === 'on').map(x => x.name);
+  if (bday.length) return `이번 달은 ${bday.join(', ')} 생일! 축하해요 🎂`;
+  return MONTH_MSG[parse(m.confirmed).getMonth() + 1];
+}
 /* D-day to a confirmed date: 'D-12', 'D-DAY', or '' once it has passed */
 function dday(k) {
   const t = new Date(), today = new Date(t.getFullYear(), t.getMonth(), t.getDate());
@@ -843,7 +857,7 @@ function vHome() {
   <article class="card">
     <div class="eyebrow">${label(m)} ${stagePill(m)}<button class="chipbtn edit-chip" data-act="edit" data-v="${m.id}">수정</button></div>
     <h2 class="h2">${esc(m.title)}</h2>
-    ${m.confirmed ? '' : `<p class="range">후보 ${fmt(m.start)} ~ ${fmt(m.end)}</p>`}
+    ${m.confirmed ? `<p class="range sub-msg">${esc(subMsg(m))}</p>` : `<p class="range">후보 ${fmt(m.start)} ~ ${fmt(m.end)}</p>`}
     ${m.confirmed ? planBlock(m) : ''}
     ${membersOpen()}${MEMBERS.map((x, i) => { const ok = ent.includes(x.id); return `<div class="mem ${x.id === meIn ? 'me' : ''} ${ok ? '' : 'pending'} ${cheers(i) ? 'cheer' : ''}" style="--i:${i}" role="button" tabindex="0" data-act="profile" data-v="${x.id}" aria-label="${x.name} 프로필">${figure(x, ok, x.name + (ok ? '' : ' (아직)'))}<span class="nm">${x.name}</span><span class="st ${ok ? 'ok' : ''}">${ok ? '완료' : '아직'}</span></div>`; }).join('')}</div>
     ${!m.confirmed && top ? `<div class="best"><span class="k">지금 가장 좋은 날</span><b>${fmt(top.d)}</b><span style="margin-left:auto;color:var(--accent);font-weight:700">${top.who.length}명</span></div>` : ''}
