@@ -1100,7 +1100,7 @@ function sheetConfirm(k) {
     <div class="row-btns"><button class="btn plain" data-act="close">취소</button><button class="btn pri" data-act="conf" data-v="${k}">확정하기</button></div>`);
 }
 function sheetPlan(id) {
-  const m = byId(id), log = (m.log || []).slice(-5).reverse();
+  const m = byId(id);
   const quick = [['12:00', '점심 12시'], ['13:00', '오후 1시'], ['14:00', '오후 2시'], ['15:00', '오후 3시']];
   openSheet(`<h2>시간·장소·코스</h2><p class="sub">${fmtY(m.confirmed)} · 식구 모두가 보고 바꿀 수 있어요.</p>
     <form id="pf" novalidate>
@@ -1109,8 +1109,7 @@ function sheetPlan(id) {
       <div class="field"><label for="pl-place">만나는 장소</label><input id="pl-place" maxlength="40" placeholder="예: 성수역 3번 출구" value="${esc(m.place || '')}" autocomplete="off"></div>
       <div class="field"><label for="pl-course">코스 <span class="hint-in">한 줄에 하나씩 · 최대 8곳</span></label><textarea id="pl-course" rows="4" maxlength="330" placeholder="예:&#10;점심 - 소금집&#10;카페 - 어니언&#10;산책 - 서울숲">${esc(m.course || '')}</textarea></div>
       <div class="row-btns"><button type="button" class="btn plain" data-act="close">취소</button><button type="submit" class="btn pri">저장하기</button></div>
-    </form>
-    ${log.length ? `<div class="grp"><div class="grp-t">바뀐 기록</div><ul class="log">${log.map(l => `<li>${av(l.by, 'sm')}<span class="lx">${M[l.by].name} · ${esc(l.text)}</span><span class="lt">${stamp(l.at)}</span></li>`).join('')}</ul></div>` : ''}`);
+    </form>`);
   document.getElementById('pf').addEventListener('submit', e => { e.preventDefault(); savePlan(id); });
 }
 function savePlan(id) {
