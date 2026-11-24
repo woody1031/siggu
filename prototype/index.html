@@ -215,7 +215,21 @@ h1,h2,h3{text-wrap:balance}
 .card.season > :not(.fall):not(.season-art){position:relative}
 /* character sits right above the 모이는 날 box; its bottom tucks behind the box */
 .art-anchor{height:0}
-.season-art{position:absolute;right:20px;bottom:-34px;width:100px;height:auto;pointer-events:none}
+.season-art{position:absolute;right:20px;bottom:-44px;width:100px;height:auto;pointer-events:none}
+.season-art.a-spring-koala{bottom:-36px}
+.season-art.a-summer-babsae{bottom:-28px}
+/* speech bubble next to the character: two lines take turns */
+.art-say{position:absolute;right:102px;bottom:58px;display:grid;padding:5px 9px;border-radius:12px 12px 3px 12px;background:var(--surface);box-shadow:0 1px 4px rgba(0,0,0,.14);font-size:11.5px;font-weight:700;line-height:1.25;color:var(--ink);white-space:nowrap;pointer-events:none;z-index:1}
+.art-say > span{grid-area:1/1;text-align:center;animation:say 5s ease-in-out infinite}
+.art-say > span + span{animation-delay:-2.5s}
+@keyframes say{0%,8%{opacity:0;transform:translateY(3px)}14%,46%{opacity:1;transform:none}52%,100%{opacity:0;transform:translateY(-3px)}}
+/* steam rising from the sweet potato */
+.steam{position:absolute;right:36px;bottom:34px;width:36px;height:30px;pointer-events:none}
+.steam i{position:absolute;bottom:0;width:9px;height:9px;border-radius:50%;background:radial-gradient(circle,rgba(255,255,255,.95) 35%,rgba(255,255,255,0) 72%);filter:drop-shadow(0 0 1px rgba(120,120,135,.35));opacity:0;animation:steam 2.6s ease-out infinite}
+.steam i:nth-child(1){left:4px}
+.steam i:nth-child(2){left:15px;animation-delay:-.87s}
+.steam i:nth-child(3){left:26px;animation-delay:-1.73s}
+@keyframes steam{0%{transform:translate(0,2px) scale(.5);opacity:0}20%{opacity:.95}55%{transform:translate(4px,-9px) scale(1)}100%{transform:translate(-3px,-22px) scale(1.6);opacity:0}}
 .card.has-art .eyebrow,.card.has-art .h2,.card.has-art .sub-msg{padding-right:112px}
 .edit-chip.inl{margin-left:2px}
 .s-winter{--sea:var(--sea-winter)} .s-spring{--sea:var(--sea-spring)} .s-summer{--sea:var(--sea-summer)} .s-autumn{--sea:var(--sea-autumn)}
@@ -223,6 +237,11 @@ h1,h2,h3{text-wrap:balance}
 .fall{position:absolute;inset:0 0 auto 0;height:210px;pointer-events:none;overflow:hidden}
 .fall i{position:absolute;top:-14px;left:var(--x);width:var(--s);height:var(--s);opacity:0;animation:fall var(--d) linear var(--w) infinite}
 .fall .flake{border-radius:50%;background:#fff;box-shadow:0 0 3px rgba(120,160,210,.35)}
+.fall .drop{width:1.5px;height:var(--s);border-radius:2px;background:linear-gradient(rgba(90,165,215,0),rgba(90,165,215,.7));animation-name:rain;animation-timing-function:linear}
+@keyframes rain{0%{transform:translate(0,0) rotate(20deg);opacity:0}12%{opacity:var(--o)}88%{opacity:var(--o)}100%{transform:translate(-78px,215px) rotate(20deg);opacity:0}}
+.fall .leaf{width:var(--s);height:var(--s);clip-path:polygon(50% 0,56% 14%,64% 10%,62% 30%,74% 22%,78% 30%,90% 26%,86% 40%,100% 44%,84% 56%,88% 64%,66% 62%,60% 72%,53% 68%,53% 100%,47% 100%,47% 68%,40% 72%,34% 62%,12% 64%,16% 56%,0 44%,14% 40%,10% 26%,22% 30%,26% 22%,38% 30%,36% 10%,44% 14%);background:linear-gradient(135deg,#F2A541,#D9622B);animation-name:petal}
+.fall .leaf:nth-child(3n+1){background:linear-gradient(135deg,#E8703A,#B8432A)}
+.fall .leaf:nth-child(3n+2){background:linear-gradient(135deg,#E9C04F,#C98A2E)}
 .fall .petal{width:var(--s);height:calc(var(--s) * .75);border-radius:100% 0 100% 0;background:linear-gradient(135deg,#FFC6D6,#FF9DB8);animation-name:petal}
 @keyframes fall{0%{transform:translate(0,0);opacity:0}12%{opacity:var(--o)}50%{transform:translate(10px,105px)}80%{opacity:var(--o)}100%{transform:translate(-6px,215px);opacity:0}}
 @keyframes petal{0%{transform:translate(0,0) rotate(var(--r));opacity:0}12%{opacity:var(--o)}35%{transform:translate(16px,75px) rotate(calc(var(--r) + 120deg))}70%{transform:translate(-10px,150px) rotate(calc(var(--r) + 230deg))}85%{opacity:var(--o)}100%{transform:translate(8px,215px) rotate(calc(var(--r) + 320deg));opacity:0}}
@@ -573,6 +592,11 @@ body{letter-spacing:-.01em}
   /* exception: the small 14px character drop still plays (owner's choice) */
   .fall .flake{animation:fall var(--d) linear var(--w) infinite!important}
   .fall .petal{animation:petal var(--d) linear var(--w) infinite!important}
+  .art-say > span{animation:say 5s ease-in-out infinite!important}
+  .art-say > span + span{animation-delay:-2.5s!important}
+  .steam i{animation:steam 2.6s ease-out infinite!important}
+  .fall .leaf{animation:petal var(--d) linear var(--w) infinite!important}
+  .fall .drop{animation:rain var(--d) linear var(--w) infinite!important}
   .members.intro .fig .char{animation:drop .34s cubic-bezier(.25,.8,.35,1) both!important;animation-delay:calc(60ms + var(--i, 0) * 70ms)!important}
   .members.intro .fig.bday-on .burst i{animation:pop .9s cubic-bezier(.15,.7,.3,1) both!important;animation-delay:calc(400ms + var(--i, 0) * 70ms + var(--j, 0) * 25ms)!important}
   .prof .fig.bday-on .burst i{animation:pop .9s cubic-bezier(.15,.7,.3,1) both!important;animation-delay:calc(250ms + var(--j, 0) * 25ms)!important}
@@ -873,6 +897,10 @@ function vEmpty() {
 }
 /* 확정된 모임 카드: 모이는 달의 계절 배경 — 겨울 하늘색+눈, 봄 연핑크+벚꽃잎, 여름 연민트, 가을 연베이지 */
 /* 확정 카드 오른쪽 위 캐릭터: 모임 달 기준 (그림이 있는 것만) */
+// Little moving extras on top of a character (speech bubble, steam).
+const ART_EXTRA = {
+  'autumn-pigeon': `<span class="art-say"><span>고구마 사세요~</span><span>고구마 맛있어요</span></span><span class="steam"><i></i><i></i><i></i></span>`,
+};
 const ART_READY = ['winter-fox', 'spring-koala', 'summer-babsae', 'autumn-pigeon', 'lateautumn-dog'];
 function seasonArt(k) {
   const mo = parse(k).getMonth() + 1;
@@ -881,10 +909,13 @@ function seasonArt(k) {
 }
 const season = k => ['winter', 'winter', 'spring', 'spring', 'spring', 'summer', 'summer', 'summer', 'autumn', 'autumn', 'autumn', 'winter'][parse(k).getMonth()];
 function fall(se) {
-  const kind = se === 'winter' ? 'flake' : se === 'spring' ? 'petal' : '';
+  const kind = se === 'winter' ? 'flake' : se === 'spring' ? 'petal' : se === 'autumn' ? 'leaf' : se === 'summer' ? 'drop' : '';
   if (!kind) return '';
-  return `<div class="fall" aria-hidden="true">${Array.from({ length: kind === 'flake' ? 16 : 12 }, (_, i) =>
-    `<i class="${kind}" style="--x:${(i * 37 + 11) % 100}%;--s:${(kind === 'flake' ? 4 : 8) + (i * 7) % 5}px;--d:${(kind === 'flake' ? 5 : 6) + (i * 13) % 5}s;--w:${-((i * 29) % 60) / 10}s;--o:${(0.55 + ((i * 17) % 40) / 100).toFixed(2)};--r:${(i * 47) % 360}deg"></i>`).join('')}</div>`;
+  const n = { flake: 16, petal: 12, leaf: 10, drop: 20 }[kind], size = { flake: 4, petal: 8, leaf: 13, drop: 8 }[kind];
+  // seconds to fall through the card: rain is quick, the rest drift
+  const dur = i => kind === 'drop' ? (3 + ((i * 13) % 5) * 0.35).toFixed(2) : { flake: 5, petal: 6, leaf: 7 }[kind] + (i * 13) % 5;
+  return `<div class="fall" aria-hidden="true">${Array.from({ length: n }, (_, i) =>
+    `<i class="${kind}" style="--x:${(i * 37 + 11) % 100 + (kind === 'drop' ? 15 : 0)}%;--s:${size + (i * 7) % 5}px;--d:${dur(i)}s;--w:${-((i * 29) % (kind === 'drop' ? 45 : 60)) / 10}s;--o:${(0.55 + ((i * 17) % 40) / 100).toFixed(2)};--r:${(i * 47) % 360}deg"></i>`).join('')}</div>`;
 }
 function vHome() {
   if (!cur()) return vEmpty();
@@ -902,7 +933,7 @@ function vHome() {
     <div class="eyebrow">${label(m)} ${stagePill(m)}<button class="chipbtn edit-chip${art ? ' inl' : ''}" data-act="edit" data-v="${m.id}">수정</button></div>
     <h2 class="h2">${esc(m.title)}</h2>
     ${m.confirmed ? `<p class="range sub-msg">${esc(subMsg(m))}</p>` : `<p class="range">후보 ${fmt(m.start)} ~ ${fmt(m.end)}</p>`}
-    ${art ? `<div class="art-anchor" aria-hidden="true"><img class="season-art" src="assets/season/${art}.webp" alt=""></div>` : ''}
+    ${art ? `<div class="art-anchor" aria-hidden="true"><img class="season-art a-${art}" src="assets/season/${art}.webp" alt="">${ART_EXTRA[art] || ''}</div>` : ''}
     ${m.confirmed ? planBlock(m) : ''}
     ${membersOpen()}${MEMBERS.map((x, i) => { const ok = ent.includes(x.id); return `<div class="mem ${x.id === meIn ? 'me' : ''} ${ok ? '' : 'pending'} ${cheers(i) ? 'cheer' : ''}" style="--i:${i}" role="button" tabindex="0" data-act="profile" data-v="${x.id}" aria-label="${x.name} 프로필">${figure(x, ok, x.name + (ok ? '' : ' (아직)'))}<span class="nm">${x.name}</span><span class="st ${ok ? 'ok' : ''}">${ok ? '완료' : '아직'}</span></div>`; }).join('')}</div>
     ${!m.confirmed && top ? `<div class="best"><span class="k">지금 가장 좋은 날</span><b>${fmt(top.d)}</b><span style="margin-left:auto;color:var(--accent);font-weight:700">${top.who.length}명</span></div>` : ''}
