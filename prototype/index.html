@@ -813,7 +813,7 @@ function planBlock(m, withYear) {
     <div class="plan-b">
       <div class="pl-row"><span class="pl-k">시간</span><span class="pl-v ${m.time ? '' : 'unset'}">${m.time ? fmtTime(m.time) : unset}</span></div>
       <div class="pl-row"><span class="pl-k">장소</span><span class="pl-v ${m.place ? '' : 'unset'}">${m.place ? esc(m.place) : unset}</span></div>
-      <div class="pl-row"><span class="pl-k">코스</span>${stops.length ? `<span class="pl-v course">${stops.map((x, i) => `<span class="stop">${i ? '<span class="arr" aria-hidden="true">→</span>' : ''}<i>${i + 1}</i>${esc(x)}</span>`).join(' ')}</span>` : `<span class="pl-v unset">${unset}</span>`}</div>
+      <div class="pl-row"><span class="pl-k">코스</span>${stops.length ? `<span class="pl-v course">${stops.map((x, i) => `<span class="stop">${i ? '<span class="arr" aria-hidden="true">→</span>' : ''}${esc(x)}</span>`).join(' ')}</span>` : `<span class="pl-v unset">${unset}</span>`}</div>
     </div>
     <div class="plan-btns">
       <button class="btn ${has || !upcoming ? 'plain' : 'pri'}" data-act="plan" data-v="${m.id}">${!upcoming ? '기록 수정' : has ? '일정 바꾸기' : '시간·장소·코스 정하기'}</button>
