@@ -1,9 +1,10 @@
-import { MEMBERS, configured, pairs, pipeline, readMeetings, redis, send } from './_db.js';
-import { bdayText, kakaoReady, notify, nudgeText, sendText, senderToken, todayKST } from './_kakao.js';
+import { MEMBERS, configured, pipeline, readMeetings, send } from './_db.js';
+import { kakaoReady, notify, nudgeText, sendText, senderToken, todayKST } from './_kakao.js';
+import { sendBirthdays } from './birthday.js';
 
 // Vercel runs this every day at 09:00 KST (vercel.json).
 // Sends the 1-week and day-before alerts, reminders to pick dates (day 3 and day 6 of a vote),
-// birthday wishes, and keeps the sender's Kakao login alive.
+// and keeps the sender's Kakao login alive. Birthdays go the night before (api/birthday.js); this sends any that were missed.
 export default async function handler(req, res) {
   if (!process.env.CRON_SECRET || req.headers.authorization !== `Bearer ${process.env.CRON_SECRET}`) return send(res, 401, { error: 'no' });
   if (!configured() || !kakaoReady()) return send(res, 200, { skipped: 'not ready' });
@@ -26,11 +27,7 @@ export default async function handler(req, res) {
     const left = MEMBERS.filter(x => !done.includes(x));
     if (round && left.length) out[`${m.id}:nudge${round}`] = await sendText(`${m.id}:nudge${round}`, nudgeText(round, m), left);
   }
-  // Birthday (only members who saved the exact day): wish goes to the other four.
-  const today = todayKST().slice(5);
-  const profiles = pairs(await redis('HGETALL', 'profiles'));
-  for (const [id, json] of Object.entries(profiles)) {
-    if (JSON.parse(json).birthday === today) out[`bday:${id}`] = await sendText(`bday:${id}:${todayKST().slice(0, 4)}`, bdayText(id), MEMBERS.filter(x => x !== id));
-  }
+  // Birthday fallback: if last night's wish didn't go out, send it now as "오늘은" (never twice).
+  out.bday = await sendBirthdays(todayKST(), true);
   send(res, 200, out);
 }

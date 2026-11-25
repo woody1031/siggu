@@ -2,5 +2,8 @@
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "outputDirectory": "prototype",
   "buildCommand": "",
-  "crons": [{ "path": "/api/cron", "schedule": "0 0 * * *" }]
+  "crons": [
+    { "path": "/api/cron", "schedule": "0 0 * * *" },
+    { "path": "/api/birthday", "schedule": "0 14 * * *" }
+  ]
 }
