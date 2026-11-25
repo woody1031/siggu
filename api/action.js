@@ -1,3 +1,4 @@
+import { notify, todayKST } from './_kakao.js';
 import { BLOB_URL, MAX_PHOTOS, MEMBERS, configured, pairs, photoKey, photosOf, pipeline, readMeetings, readState, redis, saveMeeting, send } from './_db.js';
 
 // Remove uploaded files from Vercel Blob (best effort; the record is removed either way).
@@ -17,6 +18,9 @@ const need = (ok, msg) => { if (!ok) throw new Bad(msg); };
 const clean = (s, max) => String(s ?? '').trim().slice(0, max);
 // Korea time, e.g. 2026-11-06T17:26 (the page shows it as 11/6 17:26)
 const nowKST = () => new Date(Date.now() + 9 * 3600e3).toISOString().slice(0, 16);
+
+// KakaoTalk alert when a date gets confirmed (only for days still ahead). Never blocks the save.
+const alertConfirm = m => (m.confirmed >= todayKST() ? notify('confirm', m).catch(() => {}) : null);
 
 async function apply(op) {
   const meetings = await readMeetings();
@@ -99,13 +103,14 @@ async function apply(op) {
       if (!m.confirmed && m.status === 'voting') {
         const all = Object.fromEntries(Object.entries(pairs(await redis('HGETALL', `avail:${m.id}`))).map(([k, v]) => [k, JSON.parse(v)]));
         const day = MEMBERS.every(x => all[x]) ? all[MEMBERS[0]].filter(d => MEMBERS.every(x => all[x].includes(d))).sort()[0] : null;
-        if (day) { await pipeline([saveMeeting({ ...m, confirmed: day, status: 'confirmed' })]); return { autoConfirmed: day }; }
+        if (day) { await pipeline([saveMeeting({ ...m, confirmed: day, status: 'confirmed' })]); await alertConfirm({ ...m, confirmed: day }); return { autoConfirmed: day }; }
       }
       return {};
     }
     case 'confirm': {
       need(DATE.test(op.date) && op.date >= m.start && op.date <= m.end, '후보 기간 안의 날짜를 골라주세요.');
       await pipeline([saveMeeting({ ...m, confirmed: op.date, status: 'confirmed' })]);
+      if (m.confirmed !== op.date) await alertConfirm({ ...m, confirmed: op.date });
       return {};
     }
     case 'unconfirm': {

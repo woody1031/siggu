@@ -47,7 +47,8 @@ export async function readMeetings() {
 export async function readState() {
   const meetings = Object.values(await readMeetings());
   const profiles = Object.fromEntries(Object.entries(pairs(await redis('HGETALL', 'profiles'))).map(([k, v]) => { const { phone, ...p } = JSON.parse(v); return [k, p]; }));
-  const features = { blob: blobEnabled(), maxPhotos: MAX_PHOTOS };
+  const kakao = process.env.KAKAO_REST_KEY ? Object.keys(pairs(await redis('HGETALL', 'kakao:users'))) : null;
+  const features = { blob: blobEnabled(), maxPhotos: MAX_PHOTOS, kakao };
   if (!meetings.length) return { meetings: [], profiles, features };
   const avails = await pipeline(meetings.flatMap(m => [['HGETALL', `avail:${m.id}`], ['HGETALL', `comments:${m.id}`]]));
   meetings.forEach((m, i) => {

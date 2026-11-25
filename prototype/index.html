@@ -518,6 +518,11 @@ body{letter-spacing:-.01em}
 .prof-list dd{margin:0;font-size:16px;font-weight:500;display:flex;align-items:center;gap:10px;flex-wrap:wrap;overflow-wrap:anywhere}
 .prof-list dd a{color:var(--ink);text-decoration:underline;text-underline-offset:3px}
 .prof-list .unset{color:var(--subtle);font-weight:400;font-size:15px}
+.kk-on{color:var(--primary);font-weight:700}
+.kk-list{margin:16px 0 0;display:grid;gap:10px}
+.kk-msg{justify-self:start;max-width:86%;padding:10px 13px;border-radius:4px 14px 14px 14px;background:#FEE500;color:#191919;font-size:14px;line-height:1.45;white-space:pre-line}
+.kk-msg b{display:block;margin-bottom:6px}
+.btn.kk{background:#FEE500;color:#191919}
 .hint{font-size:12px;color:var(--subtle);margin:0}
 .field .hint{justify-self:end}
 .hdr-actions{display:flex;align-items:center;gap:8px}
@@ -758,6 +763,11 @@ async function boot() {
     else { MODE = 'error'; bootError = (await r.json().catch(() => ({}))).error || ''; }
   } catch (e) { MODE = LOCAL_PREVIEW ? 'local' : 'error'; if (MODE === 'local') S = load(); }
   render();
+  const kk = new URLSearchParams(location.search).get('kakao');
+  if (kk) {
+    history.replaceState(null, '', location.pathname);
+    toast({ ok: '카톡 알림을 연결했어요 🎉', cancel: '카카오 연결을 취소했어요', fail: '카카오 연결에 실패했어요. 다시 해주세요.' }[kk] || '');
+  }
   if (MODE === 'server') {
     setInterval(refresh, 30000);
     document.addEventListener('visibilitychange', () => { if (!document.hidden) refresh(); });
@@ -1111,8 +1121,23 @@ function sheetProfile(id) {
     <dl class="prof-list">
       <div><dt>생일</dt><dd>${bd}${bdayLevel(x) === 'on' ? ' 🎂' : ''}</dd></div>
       <div><dt>한 줄 소개</dt><dd>${p.bio ? esc(p.bio) : unset}</dd></div>
+      ${mine && kakaoOn() ? `<div><dt>카톡 알림</dt><dd>${kakaoMine() ? '<span class="kk-on">받는 중 ✓</span>' : '<span class="unset">아직 연결 안 했어요</span>'}</dd></div>` : ''}
     </dl>
-    ${mine ? `<div class="btns"><button class="btn sec" data-act="editprofile">내 프로필 수정</button></div>` : ''}`);
+    ${mine ? `<div class="btns">${kakaoOn() && !kakaoMine() ? '<button class="btn kk" data-act="kakao">카톡 알림 받기</button>' : ''}<button class="btn sec" data-act="editprofile">내 프로필 수정</button></div>` : ''}`);
+}
+/* ---------- KakaoTalk alerts ---------- */
+const kakaoOn = () => MODE === 'local' || !!(S.features && S.features.kakao);
+const kakaoMine = () => MODE === 'local' ? !!(S.kakaoLocal || {})[S.me] : ((S.features && S.features.kakao) || []).includes(S.me);
+function sheetKakao() {
+  const msg = (h, w) => `<div class="kk-msg"><b>${h}</b>${w}</div>`, ex = '4회차 모임\n12월 20일 (일) 18:00\n📍 성수 고깃집';
+  openSheet(`<h2>카톡 알림 받기</h2><p class="sub">모임 날짜가 정해지면 카톡으로 알려드려요. 처음 한 번만 카카오로 연결하면 돼요.</p>
+    <div class="kk-list">${msg('🗓️ 식구 모임 날짜가 정해졌어요!', ex)}${msg('⏰ 식구 모임 1주일 전이에요', ex)}${msg('🍚 내일은 식구 모임 날이에요!', ex)}</div>
+    <div class="row-btns"><button type="button" class="btn plain" data-act="close">나중에</button><button type="button" class="btn kk" data-act="kakaogo">카카오로 연결하기</button></div>`);
+}
+function kakaoGo() {
+  if (MODE !== 'local') { location.href = `/api/kakao?member=${encodeURIComponent(S.me)}`; return; }
+  S.kakaoLocal = { ...(S.kakaoLocal || {}), [S.me]: true }; save();
+  sheetProfile(S.me); toast('테스트 페이지라 연결된 것처럼만 보여요');
 }
 function sheetProfileEdit() {
   const id = S.me, x = M[id], p = profileOf(id);
@@ -1416,6 +1441,8 @@ document.addEventListener('click', e => {
       break;
     }
     case 'profile': sheetProfile(v); break;
+    case 'kakao': sheetKakao(); break;
+    case 'kakaogo': kakaoGo(); break;
     case 'editprofile': if (!S.me) { pendingAfterPick = null; sheetWho(); } else sheetProfileEdit(); break;
     case 'theme': {
       const next = isDark() ? 'light' : 'dark';
