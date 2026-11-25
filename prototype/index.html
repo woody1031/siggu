@@ -268,7 +268,6 @@ h1,h2,h3{text-wrap:balance}
 .pl-k{font-size:12px;font-weight:500;color:var(--muted)}
 .pl-v{font-weight:500;font-size:15px;overflow-wrap:anywhere}
 .pl-v.unset{color:var(--muted);font-weight:400;font-size:14px}
-.pl-by{font-size:12px;color:var(--muted)}
 .plan-btns{display:flex;gap:8px;padding:0 14px 14px}
 .plan-btns .btn{flex:1;height:36px;font-size:13px}
 .qt{display:flex;gap:6px;flex-wrap:wrap}
@@ -859,13 +858,12 @@ function fmtTime(t) {
 }
 const stamp = s => { const d = new Date(s); return `${d.getMonth() + 1}/${d.getDate()} ${pad(d.getHours())}:${pad(d.getMinutes())}`; };
 function planBlock(m, withYear) {
-  const has = m.time || m.place, last = (m.log || [])[(m.log || []).length - 1];
+  const has = m.time || m.place;
   return `<section class="plan" aria-label="확정된 모임 정보">
     <div class="plan-h"><span class="pin" aria-hidden="true">📌</span><div><div class="t">모이는 날</div><div class="d">${withYear ? fmtY(m.confirmed) : fmt(m.confirmed)}</div></div>${dday(m.confirmed) ? `<span class="dday ${dday(m.confirmed) === 'D-DAY' ? 'today' : ''}">${dday(m.confirmed)}</span>` : ''}</div>
     <div class="plan-b">
       <div class="pl-row"><span class="pl-k">시간</span><span class="pl-v ${m.time ? '' : 'unset'}">${m.time ? fmtTime(m.time) : '아직 안 정했어요'}</span></div>
       <div class="pl-row"><span class="pl-k">장소</span><span class="pl-v ${m.place ? '' : 'unset'}">${m.place ? esc(m.place) : '아직 안 정했어요'}</span></div>
-      ${last ? `<div class="pl-by">${ga(M[last.by].name)} ${stamp(last.at)}에 마지막으로 바꿨어요</div>` : ''}
     </div>
     <div class="plan-btns">
       <button class="btn ${has ? 'plain' : 'pri'}" data-act="plan" data-v="${m.id}">${has ? '시간·장소 바꾸기' : '시간·장소 정하기'}</button>
