@@ -518,11 +518,16 @@ body{letter-spacing:-.01em}
 .prof-list dd{margin:0;font-size:16px;font-weight:500;display:flex;align-items:center;gap:10px;flex-wrap:wrap;overflow-wrap:anywhere}
 .prof-list dd a{color:var(--ink);text-decoration:underline;text-underline-offset:3px}
 .prof-list .unset{color:var(--subtle);font-weight:400;font-size:15px}
-.kk-on{color:var(--primary);font-weight:700}
 .kk-list{margin:16px 0 0;display:grid;gap:10px}
 .kk-msg{justify-self:start;max-width:86%;padding:10px 13px;border-radius:4px 14px 14px 14px;background:#FEE500;color:#191919;font-size:14px;line-height:1.45;white-space:pre-line}
 .kk-msg b{display:block;margin-bottom:6px}
 .btn.kk{background:#FEE500;color:#191919}
+.pf-links{margin-top:20px}
+.pf-links .btn{gap:6px;padding:0 10px;font-size:15px}
+.pf-links .ico{flex:none}
+.pf-links .btn.done{opacity:.6;cursor:default}
+.pf-links .btn.done:hover{background:var(--muted-bg)}
+.pf-links .ck{color:var(--primary);margin-left:-2px}
 .cal-steps{margin:14px 0 4px;padding-left:20px;display:grid;gap:6px;font-size:15px;line-height:1.45}
 .hint{font-size:12px;color:var(--subtle);margin:0}
 .field .hint{justify-self:end}
@@ -1122,11 +1127,13 @@ function sheetProfile(id) {
     <dl class="prof-list">
       <div><dt>생일</dt><dd>${bd}${bdayLevel(x) === 'on' ? ' 🎂' : ''}</dd></div>
       <div><dt>한 줄 소개</dt><dd>${p.bio ? esc(p.bio) : unset}</dd></div>
-      ${mine && kakaoOn() ? `<div><dt>카톡 알림</dt><dd>${kakaoMine() ? '<span class="kk-on">받는 중 ✓</span>' : '<span class="unset">아직 연결 안 했어요</span>'}</dd></div>` : ''}
     </dl>
-    ${mine ? `<div class="btns">${kakaoOn() && !kakaoMine() ? '<button class="btn kk" data-act="kakao">카톡 알림 받기</button>' : ''}<button class="btn sec" data-act="cal">📅 내 폰 캘린더에 추가</button><button class="btn sec" data-act="editprofile">내 프로필 수정</button></div>` : ''}`);
+    ${mine ? `<div class="row-btns pf-links">${calAdded() ? `<button class="btn sec done" disabled>${ICON_CAL}캘린더<span class="ck">추가됨 ✓</span></button>` : `<button class="btn sec" data-act="cal">${ICON_CAL}캘린더 추가</button>`}${kakaoOn() ? (kakaoMine() ? `<button class="btn sec done" disabled>${ICON_KAKAO}카톡 알림<span class="ck">받는 중 ✓</span></button>` : `<button class="btn kk" data-act="kakao">${ICON_KAKAO}카톡 알림 받기</button>`) : ''}</div>
+    <div class="btns"><button class="btn sec" data-act="editprofile">내 프로필 수정</button></div>` : ''}`);
 }
 /* ---------- KakaoTalk alerts ---------- */
+const ICON_CAL = `<svg class="ico" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><path d="M7.5 2.5V5.5M16.5 2.5V5.5M7 13H8M11.5 13H12.5M16 13H17M7 17H8M11.5 17H12.5M16 17H17"/><rect x="3" y="4" width="18" height="17" rx="3"/><path d="M3 9H21" stroke-linecap="butt"/></svg>`;
+const ICON_KAKAO = `<svg class="ico" width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 3C6.59 3 2.2 6.47 2.2 10.75c0 2.78 1.86 5.22 4.65 6.58-.2.77-.74 2.77-.85 3.2-.13.53.2.53.41.38.17-.11 2.69-1.82 3.77-2.56.59.09 1.2.13 1.82.13 5.41 0 9.8-3.47 9.8-7.74S17.41 3 12 3Z"/></svg>`;
 const kakaoOn = () => MODE === 'local' || !!(S.features && S.features.kakao);
 const kakaoMine = () => MODE === 'local' ? !!(S.kakaoLocal || {})[S.me] : ((S.features && S.features.kakao) || []).includes(S.me);
 function sheetKakao() {
@@ -1138,11 +1145,16 @@ function sheetKakao() {
 function sheetCal() {
   openSheet(`<h2>내 폰 캘린더에 추가</h2><p class="sub">한 번만 추가하면, 모임 날짜가 정해질 때마다 폰 캘린더에 일정이 저절로 생겨요. 시간·장소가 바뀌면 같이 바뀌어요.</p>
     <ol class="cal-steps"><li>아래 <b>캘린더에 추가하기</b>를 눌러요</li><li>아이폰에서 <b>구독</b>을 누르고, 다음 화면에서 <b>추가</b>를 눌러요</li><li>끝! 캘린더에 ‘식구’가 생겨요</li></ol>
-    <p class="sub">폰이 캘린더를 새로 고치는 데 시간이 걸려서, 일정은 몇십 분 뒤에 보일 수 있어요.</p>
+    <p class="sub">폰이 캘린더를 새로 고치는 데 시간이 걸려서, 일정은 몇십 분 뒤에 보일 수 있어요.${calAdded() ? '<br>이 폰에서 이미 추가했어요. 캘린더 앱 아래 <b>캘린더</b> → <b>구독</b>에 ‘식구’가 있으면 받고 있는 거예요.' : ''}</p>
     <div class="row-btns"><button type="button" class="btn plain" data-act="close">나중에</button><button type="button" class="btn pri" data-act="calgo">캘린더에 추가하기</button></div>`);
 }
+/* The site can't see the phone's calendar, so this only remembers that this phone tapped "add". */
+const CAL_KEY = 'siggu-cal-added';
+const calAdded = () => { try { return localStorage.getItem(CAL_KEY) === '1'; } catch (e) { return false; } };
 function calGo() {
-  if (MODE !== 'server') { toast('테스트 페이지에선 실제 사이트에서만 돼요'); return; }
+  try { localStorage.setItem(CAL_KEY, '1'); } catch (e) {}
+  if (MODE !== 'server') { sheetProfile(S.me); toast('테스트 페이지라 추가된 것처럼만 보여요'); return; }
+  closeSheet();
   location.href = `webcal://${location.host}/api/calendar`;
 }
 function kakaoGo() {

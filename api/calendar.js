@@ -28,9 +28,10 @@ function event(m, site) {
   } else {
     lines.push(`DTSTART;VALUE=DATE:${ymd(m.confirmed)}`, `DTEND;VALUE=DATE:${ymd(nextDay(m.confirmed))}`);
   }
-  lines.push(`SUMMARY:${esc(m.title)}`);
+  // Fixed title so it reads as a family meeting at a glance; the meeting's own name goes in the notes.
+  lines.push('SUMMARY:🤍식구모임');
   if (m.place) lines.push(`LOCATION:${esc(m.place)}`);
-  lines.push(`URL:${site}`, `DESCRIPTION:${esc(`식구 모임 · ${site}`)}`, 'END:VEVENT');
+  lines.push(`URL:${site}`, `DESCRIPTION:${esc(`${m.title}\n\n${site}`)}`, 'END:VEVENT');
   return lines;
 }
 
