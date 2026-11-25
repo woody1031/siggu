@@ -977,7 +977,7 @@ function vResult() {
   ${m.confirmed ? `<h2 class="section-t">모임 사진</h2>${photoBlock(m)}` : ''}
   ${m.confirmed ? `<h2 class="section-t">모임 후기${(m.comments || []).length ? ` <span class="cnt-sm">${m.comments.length}</span>` : ''}</h2>${reviewBlock(m)}` : ''}
   ${ent.length ? `<p class="status" style="margin-top:12px">${ent.length}/${MEMBERS.length}명 입력${pend.length ? ` · ${pend.join(', ')} 아직이에요` : ' · 모두 입력했어요'}</p>` : ''}
-  ${!ent.length ? `<div class="empty" style="margin-top:12px"><span class="big" aria-hidden="true">${m.confirmed ? '📌' : '🗓️'}</span>${m.confirmed ? '이 모임은 확정 기록만 남아 있어요.' : '아직 아무도 날짜를 찍지 않았어요.<br>첫 번째로 찍어볼까요?'}</div>` : `
+  ${!ent.length ? (m.confirmed ? '' : `<div class="empty" style="margin-top:12px"><span class="big" aria-hidden="true">🗓️</span>아직 아무도 날짜를 찍지 않았어요.<br>첫 번째로 찍어볼까요?</div>`) : `
   <h2 class="section-t" style="margin-top:16px">추천 날짜</h2>
   ${top3.length ? `<div class="picks">${top3.map((r, i) => `
     <button class="pick ${i === 0 ? 'first' : ''} ${r.who.length === MEMBERS.length ? 'all' : ''}" data-act="day" data-v="${r.d}">
