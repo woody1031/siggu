@@ -863,7 +863,7 @@ function planBlock(m, withYear) {
     <div class="plan-h"><span class="pin" aria-hidden="true">📌</span><div><div class="t">모이는 날</div><div class="d">${withYear ? fmtY(m.confirmed) : fmt(m.confirmed)}</div></div>${dday(m.confirmed) ? `<span class="dday ${dday(m.confirmed) === 'D-DAY' ? 'today' : ''}">${dday(m.confirmed)}</span>` : ''}</div>
     <div class="plan-b">
       <div class="pl-row"><span class="pl-k">시간</span><span class="pl-v ${m.time ? '' : 'unset'}">${m.time ? fmtTime(m.time) : '아직 안 정했어요'}</span></div>
-      <div class="pl-row"><span class="pl-k">장소</span><span class="pl-v ${m.place ? '' : 'unset'}">${m.place ? esc(m.place) : '아직 안 정했어요'}</span></div>
+      <div class="pl-row"><span class="pl-k">장소</span><span class="pl-v ${m.place ? '' : 'unset'}">${m.place ? esc(m.place) : '장소 정해주세요'}</span></div>
     </div>
     <div class="plan-btns">
       <button class="btn ${has ? 'plain' : 'pri'}" data-act="plan" data-v="${m.id}">${has ? '시간·장소 바꾸기' : '시간·장소 정하기'}</button>
