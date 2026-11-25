@@ -1137,7 +1137,7 @@ const kakaoMine = () => MODE === 'local' ? !!(S.kakaoLocal || {})[S.me] : ((S.fe
 function sheetKakao() {
   const msg = (h, w) => `<div class="kk-msg"><b>${h}</b>${w}</div>`, ex = '4회차 모임\n12월 20일 (일) 18:00\n📍 성수 고깃집';
   openSheet(`<h2>카톡 알림 받기</h2><p class="sub">모임 날짜가 정해지면 카톡으로 알려드려요. 처음 한 번만 카카오로 연결하면 돼요.</p>
-    <div class="kk-list">${msg('🗓️ 식구 모임 날짜가 정해졌어요!', ex)}${msg('⏰ 식구 모임 1주일 전이에요', ex)}${msg('🍚 내일은 식구 모임 날이에요!', ex)}</div>
+    <div class="kk-list">${msg('🗓️ [식구] 식구 모임 날짜가 정해졌어요!', ex)}${msg('⏰ [식구] 식구 모임 1주일 전이에요', ex)}${msg('🍚 [식구] 내일은 식구 모임 날이에요!', ex)}</div>
     <div class="row-btns"><button type="button" class="btn plain" data-act="close">나중에</button><button type="button" class="btn kk" data-act="kakaogo">카카오로 연결하기</button></div>`);
 }
 function sheetCal() {

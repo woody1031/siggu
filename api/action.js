@@ -1,4 +1,4 @@
-import { notify, todayKST } from './_kakao.js';
+import { lastText, notify, sendText, todayKST } from './_kakao.js';
 import { BLOB_URL, MAX_PHOTOS, MEMBERS, configured, pairs, photoKey, photosOf, pipeline, readMeetings, readState, redis, saveMeeting, send } from './_db.js';
 
 // Remove uploaded files from Vercel Blob (best effort; the record is removed either way).
@@ -104,6 +104,9 @@ async function apply(op) {
         const all = Object.fromEntries(Object.entries(pairs(await redis('HGETALL', `avail:${m.id}`))).map(([k, v]) => [k, JSON.parse(v)]));
         const day = MEMBERS.every(x => all[x]) ? all[MEMBERS[0]].filter(d => MEMBERS.every(x => all[x].includes(d))).sort()[0] : null;
         if (day) { await pipeline([saveMeeting({ ...m, confirmed: day, status: 'confirmed' })]); await alertConfirm({ ...m, confirmed: day }); return { autoConfirmed: day }; }
+        // Four have picked and one is left: tell that one right away (once per vote).
+        const left = MEMBERS.filter(x => !all[x]);
+        if (left.length === 1) await sendText(`${m.id}:last:${left[0]}`, lastText(left[0], m), left).catch(() => {});
       }
       return {};
     }

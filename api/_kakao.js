@@ -83,36 +83,57 @@ const DOW = ['일', '월', '화', '수', '목', '금', '토'];
 const day = d => { const [y, m, dd] = d.split('-').map(Number); return `${m}월 ${dd}일 (${DOW[new Date(Date.UTC(y, m - 1, dd)).getUTCDay()]})`; };
 
 export function messageText(kind, m) {
-  const head = { confirm: '🗓️ 식구 모임 날짜가 정해졌어요!', d7: '⏰ 식구 모임 1주일 전이에요', d1: '🍚 내일은 식구 모임 날이에요!' }[kind];
+  const head = { confirm: '🗓️ [식구] 식구 모임 날짜가 정해졌어요!', d7: '⏰ [식구] 식구 모임 1주일 전이에요', d1: '🍚 [식구] 내일은 식구 모임 날이에요!' }[kind];
   const when = [day(m.confirmed), m.time].filter(Boolean).join(' ');
   return [head, '', m.title, when, m.place ? `📍 ${m.place}` : ''].filter((l, i) => l || i === 1).join('\n').slice(0, 200);
 }
 
-// Send one alert to everyone connected. Returns who it reached. Never sends the same alert twice.
-export async function notify(kind, m) {
-  if (!kakaoReady() || !m || !m.confirmed) return { skipped: 'not ready' };
-  const key = `${m.id}:${kind}:${m.confirmed}`;
+const fmtMD = d => { const [, m, dd] = d.split('-').map(Number); return `${m}월 ${dd}일`; };
+export const memberName = id => NAMES[id] || id;
+
+// Reminder for members who haven't picked dates yet (round 1 on day 3, round 2 on day 6).
+export const nudgeText = (round, m) => [round === 1 ? '⏰ [식구] 아직 날짜를 안 골랐어요' : '⏰ [식구] 날짜 고르기, 잊지 않으셨죠?', '',
+  m.title, `후보 ${fmtMD(m.start)} ~ ${fmtMD(m.end)}`, '가능한 날을 찍어주세요!'].join('\n');
+// Four have picked; only one is left.
+export const lastText = (id, m) => [`🙋 [식구] 이제 ${memberName(id)}님만 남았어요!`, '',
+  m.title, `${memberName(id)}님이 가능한 날을 고르면 모임 날짜가 정해져요.`].join('\n');
+export const bdayText = id => [`🎂 [식구] 오늘은 ${memberName(id)} 생일이에요!`, '', '다 같이 축하해 주세요 🎉'].join('\n');
+
+// Send a text to some members (default: everyone connected), once per key.
+// Members other than the sender get it in their 1:1 chat with the sender; the sender gets it in "나와의 채팅".
+export async function sendText(key, text, to = null) {
+  if (!kakaoReady()) return { skipped: 'not ready' };
   if (!(await redis('SADD', 'kakao:sent', key))) return { skipped: 'already sent' };
   try {
-    const token = await senderToken();
+    const sender = process.env.KAKAO_SENDER;
     const users = Object.fromEntries(Object.entries(pairs(await redis('HGETALL', 'kakao:users'))).map(([k, v]) => [k, JSON.parse(v).id]));
-    const ids = new Set(Object.entries(users).filter(([k]) => k !== process.env.KAKAO_SENDER).map(([, id]) => id));
+    const want = Object.keys(users).filter(k => !to || to.includes(k));
+    if (!want.length) { await redis('SREM', 'kakao:sent', key); return { skipped: 'nobody connected' }; }
+    const token = await senderToken();
+    const ids = new Set(want.filter(k => k !== sender).map(k => users[k]));
     const friends = ids.size ? (await kakao('https://kapi.kakao.com/v1/api/talk/friends?limit=100', { token })).elements || [] : [];
     const uuids = friends.filter(f => ids.has(f.id)).map(f => f.uuid).slice(0, 5);
     const template_object = JSON.stringify({
-      object_type: 'text', text: messageText(kind, m), button_title: '식구 열기',
+      object_type: 'text', text: text.slice(0, 200), button_title: '식구 열기',
       link: { web_url: SITE, mobile_web_url: SITE },
     });
-    const sent = [];
+    let sent = 0;
     if (uuids.length) {
       const r = await kakao('https://kapi.kakao.com/v1/api/talk/friends/message/default/send', { token, body: { receiver_uuids: JSON.stringify(uuids), template_object } });
-      sent.push(...(r.successful_receiver_uuids || []));
+      sent = (r.successful_receiver_uuids || []).length;
     }
-    await kakao('https://kapi.kakao.com/v2/api/talk/memo/default/send', { token, body: { template_object } });
-    return { sent: sent.length, self: true };
+    const self = want.includes(sender);
+    if (self) await kakao('https://kapi.kakao.com/v2/api/talk/memo/default/send', { token, body: { template_object } });
+    return { sent, self };
   } catch (e) {
-    await redis('SREM', 'kakao:sent', key); // let the next try (cron or another confirm) send it
-    console.error('kakao notify failed', kind, m.id, e.message);
+    await redis('SREM', 'kakao:sent', key); // let the next try send it
+    console.error('kakao send failed', key, e.message);
     return { error: e.message };
   }
+}
+
+// Date alerts (confirmed / 1 week before / day before) go to everyone. Never sent twice for the same date.
+export async function notify(kind, m) {
+  if (!m || !m.confirmed) return { skipped: 'no date' };
+  return sendText(`${m.id}:${kind}:${m.confirmed}`, messageText(kind, m));
 }
