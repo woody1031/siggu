@@ -97,7 +97,14 @@ export const nudgeText = (round, m) => [round === 1 ? '⏰ [식구] 아직 날�
 // Four have picked; only one is left.
 export const lastText = (id, m) => [`🙋 [식구] 이제 ${memberName(id)}님만 남았어요!`, '',
   m.title, `${memberName(id)}님이 가능한 날을 고르면 모임 날짜가 정해져요.`].join('\n');
-export const bdayText = id => [`🎂 [식구] 오늘은 ${memberName(id)} 생일이에요!`, '', '다 같이 축하해 주세요 🎉'].join('\n');
+const BDAY = {
+  dog: '오늘은 충주의 힙쟁이 영지 생일이에요',
+  babsae: '오늘은 알잘딱깔센 다연공주의 생일이에요',
+  koala: '오늘은 우리 영원한 막둥이 근주 생일이에요',
+  fox: '오늘은 마음만은 온면인 냉미녀 동은의 생일이에요',
+  pigeon: '오늘은 다정한 수진의 생일이에요',
+};
+export const bdayText = id => [`🎂 [식구] ${BDAY[id] || `오늘은 ${memberName(id)} 생일이에요`}`, '', '다 같이 축하해 주세요 🎉'].join('\n');
 
 // Send a text to some members (default: everyone connected), once per key.
 // Members other than the sender get it in their 1:1 chat with the sender; the sender gets it in "나와의 채팅".
