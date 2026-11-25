@@ -646,14 +646,14 @@ const ga = w => w + (hasBatchim(w) ? '이' : '가');
 const eul = w => w + (hasBatchim(w) ? '을' : '를');
 const eun = w => w + (hasBatchim(w) ? '은' : '는');
 const ro = w => { const c = w.charCodeAt(w.length - 1) - 0xAC00; return w + (hasBatchim(w) && c % 28 !== 8 ? '으로' : '로'); };
-/* 생일 달에는 꼬깔모자, 생일 전달·다음달에는 반투명 꼬깔모자를 써요. 미리보기: 주소 뒤에 ?month=10 처럼 붙이면 그 달로 보여요. */
+/* 생일 달에는 꼬깔모자, 생일 전달에는 반투명 꼬깔모자를 써요. 생일 달이 지나면 벗어요. 미리보기: 주소 뒤에 ?month=10 처럼 붙이면 그 달로 보여요. */
 const MONTH = (() => { const q = new URLSearchParams(location.search).get('month'); const n = Number(q); return q === 'all' ? 'all' : (n >= 1 && n <= 12 ? n : new Date().getMonth() + 1); })();
 const bdayOf = x => { const b = ((typeof S !== 'undefined' && S.profiles) || {})[x.id]; return b && b.birthday ? Number(b.birthday.slice(0, 2)) : x.bday; };
 const bdayLevel = x => {
   const bd = bdayOf(x);
   if (MONTH === 'all' || bd === MONTH) return 'on';
-  const prev = MONTH === 1 ? 12 : MONTH - 1, next = MONTH === 12 ? 1 : MONTH + 1;
-  return bd === prev || bd === next ? 'near' : '';
+  const next = MONTH === 12 ? 1 : MONTH + 1; // birthday next month
+  return bd === next ? 'near' : '';
 };
 const hatSvg = id => `<svg class="hat" viewBox="0 0 40 54" aria-hidden="true"><defs><clipPath id="hc-${id}"><path d="M20 9 L35 47 Q20 53 5 47 Z"/></clipPath></defs><g clip-path="url(#hc-${id})"><rect width="40" height="54" fill="#FF8FAB"/><path d="M0 22 L40 15 L40 21 L0 28Z M0 36 L40 29 L40 35 L0 42Z" fill="#FFD43B"/><circle cx="13" cy="31" r="1.6" fill="#4DABF7"/><circle cx="25" cy="25" r="1.6" fill="#4DABF7"/><circle cx="22" cy="44" r="1.6" fill="#4DABF7"/></g><path d="M5 47 Q20 53 35 47" fill="none" stroke="#E64980" stroke-width="2.4" stroke-linecap="round"/><circle cx="20" cy="8" r="5.5" fill="#FFD43B"/></svg>`;
 /* little confetti pop above a birthday-month character: 12 bits fanned out, mostly upward */
