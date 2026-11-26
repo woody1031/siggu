@@ -1,5 +1,5 @@
 import { MEMBERS, configured, readMeetings, send } from './_db.js';
-import { bdayText, finishLogin, kakaoReady, lastText, loginUrl, messageText, notify, nudgeText, sendText, todayKST } from './_kakao.js';
+import { bdayText, finishLogin, reachable, kakaoReady, lastText, loginUrl, messageText, notify, nudgeText, sendText, todayKST } from './_kakao.js';
 
 // GET /api/kakao?member=koala       -> Kakao login for that member
 // GET /api/kakao?code=..&state=koala -> Kakao sends them back here; save and return to the site
@@ -12,6 +12,7 @@ export default async function handler(req, res) {
 
   if (q.step === 'test') {
     if (!process.env.CRON_SECRET || q.key !== process.env.CRON_SECRET) return send(res, 401, { error: 'no' });
+    if (q.check) { try { return send(res, 200, await reachable()); } catch (e) { return send(res, 200, { error: e.message }); } }
     const next = Object.values(await readMeetings()).filter(m => m.confirmed && m.confirmed >= todayKST()).sort((a, b) => a.confirmed.localeCompare(b.confirmed))[0];
     // &me=1 sends only to the sender ("나와의 채팅"), &kind= confirm|d7|d1|nudge1|nudge2|last|bday, &who= member for last/bday
     const kind = q.kind || 'confirm', who = MEMBERS.includes(q.who) ? q.who : process.env.KAKAO_SENDER;

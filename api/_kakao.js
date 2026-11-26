@@ -147,3 +147,12 @@ export async function notify(kind, m) {
   if (!m || !m.confirmed) return { skipped: 'no date' };
   return sendText(`${m.id}:${kind}:${m.confirmed}`, messageText(kind, m));
 }
+
+// Setup check: which connected members the sender's KakaoTalk can reach right now.
+export async function reachable() {
+  const token = await senderToken();
+  const users = Object.fromEntries(Object.entries(pairs(await redis('HGETALL', 'kakao:users'))).map(([k, v]) => [k, JSON.parse(v).id]));
+  const friends = (await kakao('https://kapi.kakao.com/v1/api/talk/friends?limit=100', { token })).elements || [];
+  const ids = new Set(friends.map(f => f.id));
+  return { friendsVisible: friends.length, connected: Object.keys(users), reachable: Object.keys(users).filter(k => ids.has(users[k])) };
+}
