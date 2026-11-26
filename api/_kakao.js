@@ -54,7 +54,10 @@ export async function finishLogin(redirect, member, code) {
     grant_type: 'authorization_code', client_id: process.env.KAKAO_REST_KEY, client_secret: process.env.KAKAO_CLIENT_SECRET, redirect_uri: redirect, code,
   } });
   const me = await kakao('https://kapi.kakao.com/v2/user/me', { token: j.access_token });
+  // One Kakao account belongs to one member: if it was linked to someone else's slot (wrong phone), drop that link.
+  const stale = Object.entries(pairs(await redis('HGETALL', 'kakao:users'))).filter(([k, v]) => k !== member && JSON.parse(v).id === me.id).map(([k]) => k);
   await pipeline([
+    ...stale.flatMap(k => [['HDEL', 'kakao:users', k], ['HDEL', 'kakao:tokens', k]]),
     ['HSET', 'kakao:users', member, JSON.stringify({ id: me.id, at: Date.now() })],
     ['HSET', 'kakao:tokens', member, JSON.stringify(tokenSet(j))],
   ]);
@@ -120,21 +123,38 @@ export async function sendText(key, text, to = null) {
     const want = Object.keys(users).filter(k => !to || to.includes(k));
     if (!want.length) { await redis('SREM', 'kakao:sent', key); return { skipped: 'nobody connected' }; }
     const token = await senderToken();
-    const ids = new Set(want.filter(k => k !== sender).map(k => users[k]));
-    const friends = ids.size ? (await kakao('https://kapi.kakao.com/v1/api/talk/friends?limit=100', { token })).elements || [] : [];
-    const uuids = friends.filter(f => ids.has(f.id)).map(f => f.uuid).slice(0, 5);
+    const others = want.filter(k => k !== sender);
+    const friends = others.length ? (await kakao('https://kapi.kakao.com/v1/api/talk/friends?limit=100', { token })).elements || [] : [];
+    const uuidOf = Object.fromEntries(others.map(k => [k, (friends.find(f => f.id === users[k]) || {}).uuid]).filter(([, u]) => u));
     const template_object = JSON.stringify({
       object_type: 'text', text: text.slice(0, 200), button_title: '식구 열기',
       link: { web_url: SITE, mobile_web_url: SITE },
     });
-    let sent = 0;
-    if (uuids.length) {
-      const r = await kakao('https://kapi.kakao.com/v1/api/talk/friends/message/default/send', { token, body: { receiver_uuids: JSON.stringify(uuids), template_object } });
-      sent = (r.successful_receiver_uuids || []).length;
-    }
+    const deliver = async list => {
+      if (!list.length) return [];
+      try {
+        const r = await kakao('https://kapi.kakao.com/v1/api/talk/friends/message/default/send', { token, body: { receiver_uuids: JSON.stringify([...new Set(list.map(k => uuidOf[k]))]), template_object } });
+        const ok = new Set(r.successful_receiver_uuids || []);
+        if (r.failure_info) console.error('kakao partial failure', key, JSON.stringify(r.failure_info));
+        return list.filter(k => ok.has(uuidOf[k]));
+      } catch (e) { console.error('kakao send failed', key, e.message); return []; }
+    };
+    const targets = Object.keys(uuidOf);
+    const got = await deliver(targets);
+    got.push(...await deliver(targets.filter(k => !got.includes(k)))); // one retry for anyone missed
+    const missed = others.filter(k => !got.includes(k));
+    // Two members on one Kakao account means one of them really gets nothing (someone connected on the wrong phone).
+    const sameAs = others.filter(k => others.some(o => o !== k && users[o] === users[k]));
+    if (sameAs.length) missed.push(...sameAs.filter(k => !missed.includes(k)));
     const self = want.includes(sender);
     if (self) await kakao('https://kapi.kakao.com/v2/api/talk/memo/default/send', { token, body: { template_object } });
-    return { sent, self };
+    if (missed.length) {
+      // Tell the sender who didn't get it, so nobody is silently left out.
+      const note = sameAs.length ? `\n(${sameAs.map(memberName).join(', ')}이 같은 카카오 계정으로 연결돼 있어요. 본인 폰에서 다시 연결해 주세요)` : '';
+      const warn = JSON.stringify({ object_type: 'text', text: `⚠️ [식구] ${missed.map(memberName).join(', ')}에게 알림이 안 갔을 수 있어요${note}\n\n${text.split('\n')[0]}`.slice(0, 200), link: { web_url: SITE, mobile_web_url: SITE } });
+      await kakao('https://kapi.kakao.com/v2/api/talk/memo/default/send', { token, body: { template_object: warn } }).catch(() => {});
+    }
+    return { sent: new Set(got.map(k => uuidOf[k])).size, got, missed, self };
   } catch (e) {
     await redis('SREM', 'kakao:sent', key); // let the next try send it
     console.error('kakao send failed', key, e.message);
@@ -165,5 +185,8 @@ export async function reachable() {
       consent[k] = Object.fromEntries(sc.filter(x => ['talk_message', 'friends'].includes(x.id)).map(x => [x.id, x.agreed]));
     } catch (e) { consent[k] = e.message; }
   }
-  return { friendsVisible: friends.length, connected: Object.keys(users), reachable: Object.keys(users).filter(k => ids.has(users[k])), consent };
+  const byId = {};
+  for (const [k, id] of Object.entries(users)) (byId[id] = byId[id] || []).push(k);
+  const shared = Object.values(byId).filter(list => list.length > 1);
+  return { friendsVisible: friends.length, connected: Object.keys(users), reachable: Object.keys(users).filter(k => ids.has(users[k])), shared, consent };
 }
