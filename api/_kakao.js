@@ -154,5 +154,16 @@ export async function reachable() {
   const users = Object.fromEntries(Object.entries(pairs(await redis('HGETALL', 'kakao:users'))).map(([k, v]) => [k, JSON.parse(v).id]));
   const friends = (await kakao('https://kapi.kakao.com/v1/api/talk/friends?limit=100', { token })).elements || [];
   const ids = new Set(friends.map(f => f.id));
-  return { friendsVisible: friends.length, connected: Object.keys(users), reachable: Object.keys(users).filter(k => ids.has(users[k])) };
+  // Each member's own consent for messages and friend list (from the token saved when they connected).
+  const toks = pairs(await redis('HGETALL', 'kakao:tokens')), consent = {};
+  for (const [k, v] of Object.entries(toks)) {
+    try {
+      const t = JSON.parse(v);
+      let access = t.access;
+      if (t.accessExp - Date.now() < 60e3) access = (await kakao('https://kauth.kakao.com/oauth/token', { body: { grant_type: 'refresh_token', client_id: process.env.KAKAO_REST_KEY, client_secret: process.env.KAKAO_CLIENT_SECRET, refresh_token: t.refresh } })).access_token;
+      const sc = (await kakao('https://kapi.kakao.com/v2/user/scopes', { token: access })).scopes || [];
+      consent[k] = Object.fromEntries(sc.filter(x => ['talk_message', 'friends'].includes(x.id)).map(x => [x.id, x.agreed]));
+    } catch (e) { consent[k] = e.message; }
+  }
+  return { friendsVisible: friends.length, connected: Object.keys(users), reachable: Object.keys(users).filter(k => ids.has(users[k])), consent };
 }
